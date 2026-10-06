@@ -1,0 +1,34 @@
+bundle:
+  name: idea-foundry
+
+# Lakebase for the shared CAD review trail (see README › Capabilities from UMW).
+# Uncomment with the resources block below and fill in targets.default.variables.
+# variables:
+#   postgres_branch:
+#     description: Lakebase branch resource name, e.g. projects/<project>/branches/<branch>
+#   postgres_database:
+#     description: Lakebase database resource name, e.g. projects/<project>/branches/<branch>/databases/<database>
+
+resources:
+  apps:
+    app:
+      name: idea-foundry
+      description: Idea Foundry — engineering ideas into fieldable solutions
+      source_code_path: ./
+      lifecycle:
+        started: true
+      # resources:
+      #   - name: postgres
+      #     postgres:
+      #       branch: ${var.postgres_branch}
+      #       database: ${var.postgres_database}
+      #       permission: CAN_CONNECT_AND_CREATE
+
+targets:
+  default:
+    default: true
+    workspace:
+      host: https://dbc-045433f3-7964.cloud.databricks.com
+    # variables:
+    #   postgres_branch: projects/<project>/branches/<branch>
+    #   postgres_database: projects/<project>/branches/<branch>/databases/<database>

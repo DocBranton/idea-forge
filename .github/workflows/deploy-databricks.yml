@@ -1,0 +1,69 @@
+name: Deploy Idea Foundry to Databricks
+
+# Manual until the DATABRICKS_TOKEN secret is set on DocBranton/cl-idea-foundry.
+# Then add:  push: { branches: [main] }
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: idea-foundry-databricks
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      DATABRICKS_HOST: https://dbc-045433f3-7964.cloud.databricks.com
+      DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check deployment credential
+        run: |
+          if [ -z "$DATABRICKS_TOKEN" ]; then
+            echo "::error::Add the DATABRICKS_TOKEN repository secret on DocBranton/cl-idea-foundry. A token on another repo is not visible here."
+            exit 1
+          fi
+      - name: Install Databricks CLI
+        uses: databricks/setup-cli@main
+      - name: Stage app source
+        run: |
+          mkdir -p "$RUNNER_TEMP/idea-foundry-deploy"
+          rsync -a \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='node_modules' \
+            --exclude='dist' \
+            --exclude='client/dist' \
+            --exclude='.env*' \
+            ./ "$RUNNER_TEMP/idea-foundry-deploy/"
+      - name: Upload app source
+        run: databricks workspace import-dir "$RUNNER_TEMP/idea-foundry-deploy" /Workspace/Shared/idea-foundry --overwrite
+      - name: Ensure the idea-foundry app exists
+        run: |
+          if databricks apps get idea-foundry --output json >/tmp/idea-foundry-app.json 2>/tmp/idea-foundry-app.err; then
+            echo "App idea-foundry already exists"
+          else
+            echo "Creating app idea-foundry"
+            databricks apps create --json '{"name":"idea-foundry","description":"Idea Foundry"}'
+          fi
+      - name: Deploy idea-foundry
+        run: databricks apps deploy idea-foundry --source-code-path /Workspace/Shared/idea-foundry
+      - name: Check app status
+        run: |
+          for i in $(seq 1 40); do
+            state=$(databricks apps get idea-foundry --output json | jq -r '.app_status.state // empty')
+            url=$(databricks apps get idea-foundry --output json | jq -r '.url // empty')
+            echo "Attempt $i/40: ${state:-unknown} ${url}"
+            if [ "$state" = RUNNING ]; then
+              echo "APP_URL=$url"
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "::error::idea-foundry did not reach RUNNING status."
+          databricks apps get idea-foundry --output json
+          exit 1

@@ -1,0 +1,5 @@
+command: ["npm", "run", "start"]
+# Lakebase for the shared CAD review trail; uncomment with the postgres resource in databricks.yml.
+# env:
+#   - name: LAKEBASE_ENDPOINT
+#     valueFrom: postgres
