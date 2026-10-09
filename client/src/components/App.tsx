@@ -147,10 +147,10 @@ export function App() {
           <Cog className="gear" strokeWidth={2.4} aria-hidden="true" />
           <div className="wordmark">
             <span>Idea</span>
-            <em>Foundry</em>
+            <em>Forge</em>
           </div>
         </div>
-        <p className="tagline">Engineering ideas<br />into fieldable solutions</p>
+        <p className="tagline">Turning bold ideas<br />into mission-ready capabilities</p>
 
         <div className="nav-label">Workspace</div>
         <nav className="nav-list">

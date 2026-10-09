@@ -3,7 +3,7 @@ import { CadEventStore } from "./cad-events";
 import { registerCadRoutes } from "./cad-routes";
 import { registerMeRoute } from "./me-route";
 
-// Idea Foundry server. The runtime and the CAD review trail come from UMW unchanged.
+// Idea Forge server. The runtime and the CAD review trail come from UMW unchanged.
 // Lakebase joins the app only when a postgres resource is configured (app.yaml sets
 // LAKEBASE_ENDPOINT from it). Without it, CAD reviews stay in each browser.
 const withLakebase = !!process.env.LAKEBASE_ENDPOINT;

@@ -1,4 +1,4 @@
-name: Deploy Idea Foundry to Databricks
+name: Deploy Idea Forge to Databricks
 
 # Manual until the DATABRICKS_TOKEN secret is set on DocBranton/cl-idea-foundry.
 # Then add:  push: { branches: [main] }
@@ -48,7 +48,7 @@ jobs:
             echo "App idea-forge already exists"
           else
             echo "Creating app idea-forge"
-            databricks apps create --json '{"name":"idea-forge","description":"Idea Foundry"}'
+            databricks apps create --json '{"name":"idea-forge","description":"Idea Forge"}'
           fi
       - name: Deploy idea-forge
         run: databricks apps deploy idea-forge --source-code-path /Workspace/Shared/idea-forge

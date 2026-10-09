@@ -13,7 +13,7 @@ resources:
   apps:
     app:
       name: idea-forge
-      description: Idea Foundry — engineering ideas into fieldable solutions
+      description: Idea Forge — turning bold ideas into mission-ready capabilities
       source_code_path: ./
       lifecycle:
         started: true

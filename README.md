@@ -1,4 +1,4 @@
-# Idea Foundry
+# Idea Forge
 
 Engineering ideas into fieldable solutions. One Databricks app: AppKit is the runtime, the Unified Mission Workbench (UMW) provides the underlying capabilities, and the concept graphic is the UI contract.
 
@@ -6,7 +6,7 @@ Engineering ideas into fieldable solutions. One Databricks app: AppKit is the ru
 
 ## What is in this first slice
 
-- **Shell** from the concept: Air Force lockup and Idea Foundry mark in the sidebar, search, Submit an idea, notifications and the signed-in user in the top bar.
+- **Shell** from the concept: Air Force lockup and Idea Forge mark in the sidebar, search, Submit an idea, notifications and the signed-in user in the top bar.
 - **Hero** with the headline, Start My Own Project, and the six-stage pipeline: Define, Discover, Design, Validate, Produce, Field.
 - **Collapse tab.** The tab under the hero folds it vertically into a single band that keeps the headline, the call to action and the pipeline. The choice is remembered per browser. Below 1720 px wide the band shows the pipeline only.
 - **Home board**: projects in flight with their stage, open challenges, and the capability network. Search filters all three.
@@ -21,7 +21,7 @@ Copied from `DocBranton/umw` at `8bf07e0`, not imported. Changes are limited to 
 
 | Capability | Where | Notes |
 | --- | --- | --- |
-| AppKit runtime, build and bundle config | `package.json`, `tsconfig*.json`, `tsdown.server.config.ts`, `client/vite.config.ts`, `app.yaml`, `databricks.yml` | App name `idea-foundry`, same workspace as UMW |
+| AppKit runtime, build and bundle config | `package.json`, `tsconfig*.json`, `tsdown.server.config.ts`, `client/vite.config.ts`, `app.yaml`, `databricks.yml` | App name `idea-forge`, same workspace as UMW |
 | Verified Engineering CAD | `client/src/cad/`, `client/public/cad/`, `client/public/vendor/occt/` | STEP, IGES, BREP, STL, OBJ, glTF in the browser. Feature recognition, drawing generation. OpenCascade is LGPL-2.1, unmodified |
 | CAD review trail | `server/cad-events.ts`, `server/cad-routes.ts` | Lakebase table renamed to `foundry.cad_events`. Off until a `postgres` resource is configured (see UMW's README › Review trail; the steps are the same) |
 | Signed-in user | `server/me-route.ts` | `GET /api/me` from the Databricks Apps headers. The top bar shows the concept persona until a real user is signed in |
@@ -45,7 +45,7 @@ npm run test:cad
 
 ## Deploy
 
-`databricks bundle deploy` from this directory, or run the **Deploy Idea Foundry to Databricks** workflow. The workflow is manual until the `DATABRICKS_TOKEN` secret is added to this repository; then add a `push` trigger on `main`.
+`databricks bundle deploy` from this directory, or run the **Deploy Idea Forge to Databricks** workflow. The workflow is manual until the `DATABRICKS_TOKEN` secret is added to this repository; then add a `push` trigger on `main`.
 
 ## Hero art
 

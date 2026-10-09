@@ -10,7 +10,7 @@ interface HeroProps {
 }
 
 /**
- * The Idea Foundry hero. Expanded, it carries the headline, the call to action and the
+ * The Idea Forge hero. Expanded, it carries the headline, the call to action and the
  * six-stage pipeline over the concept art. Collapsed, it folds vertically into a single
  * band that keeps the pipeline reachable. The Collapse tab under the hero toggles it.
  */
@@ -40,7 +40,7 @@ export function Hero({ collapsed, onToggle, stage, onStage, onStart }: HeroProps
           </button>
         </div>
 
-        <ol className="pipeline" aria-label="Idea Foundry stages">
+        <ol className="pipeline" aria-label="Idea Forge stages">
           {STAGES.map((s) => (
             <li key={s.id}>
               <button

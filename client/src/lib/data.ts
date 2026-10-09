@@ -1,4 +1,4 @@
-// Idea Foundry mock data. This is the design contract's content, not live data.
+// Idea Forge mock data. This is the design contract's content, not live data.
 // When a slice moves to the warehouse, its query goes in config/queries/ and this
 // module keeps only the types.
 
