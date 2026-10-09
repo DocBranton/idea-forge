@@ -1,6 +1,6 @@
 # Idea Forge
 
-Turning bold ideas into mission-ready capabilities. One Databricks app: AppKit is the runtime, the Unified Mission Workbench (UMW) provides the underlying capabilities, and the concept graphic is the UI contract. The repository slug is still `cl-idea-foundry`; the Lakebase schema stays `foundry` so existing review-trail tables do not move.
+Turning bold ideas into mission-ready capabilities. One Databricks app: AppKit is the runtime, the Unified Mission Workbench (UMW) provides the underlying capabilities, and the concept graphic is the UI contract. The repository slug is still `cl-idea-forge`; the Lakebase schema stays `foundry` so existing review-trail tables do not move.
 
 ![Concept](docs/concept-hero.png)
 

@@ -1,6 +1,6 @@
 name: Deploy Idea Forge to Databricks
 
-# Manual until the DATABRICKS_TOKEN secret is set on DocBranton/cl-idea-foundry.
+# Manual until the DATABRICKS_TOKEN secret is set on DocBranton/cl-idea-forge.
 # Then add:  push: { branches: [main] }
 on:
   workflow_dispatch:
@@ -24,7 +24,7 @@ jobs:
       - name: Check deployment credential
         run: |
           if [ -z "$DATABRICKS_TOKEN" ]; then
-            echo "::error::Add the DATABRICKS_TOKEN repository secret on DocBranton/cl-idea-foundry. A token on another repo is not visible here."
+            echo "::error::Add the DATABRICKS_TOKEN repository secret on DocBranton/cl-idea-forge. A token on another repo is not visible here."
             exit 1
           fi
       - name: Install Databricks CLI
