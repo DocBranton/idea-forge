@@ -17,7 +17,7 @@ import { Hero } from "./Hero";
 import { Board } from "./Board";
 import { Gallery } from "./Gallery";
 import { Challenges } from "./Challenges";
-import { Community } from "./Community";
+import { CommunityProjects } from "./CommunityProjects";
 import { MyWork } from "./MyWork";
 import { StageView } from "./StageView";
 import { IdeaModal, type IdeaDraft } from "./IdeaModal";
@@ -277,7 +277,7 @@ export function App() {
               onPing={ping}
             />
           ) : view.kind === "community" ? (
-            <Community projects={projects} query={query} onStage={(id) => navigate({ kind: "stage", stage: id })} onPing={ping} />
+            <CommunityProjects query={query} signedInName={me.name} onStage={(id) => navigate({ kind: "stage", stage: id })} />
           ) : view.kind === "work" ? (
             <MyWork
               projects={projects}
