@@ -1,5 +1,5 @@
 bundle:
-  name: idea-foundry
+  name: idea-forge
 
 # Lakebase for the shared CAD review trail (see README › Capabilities from UMW).
 # Uncomment with the resources block below and fill in targets.default.variables.
@@ -12,7 +12,7 @@ bundle:
 resources:
   apps:
     app:
-      name: idea-foundry
+      name: idea-forge
       description: Idea Foundry — engineering ideas into fieldable solutions
       source_code_path: ./
       lifecycle:
