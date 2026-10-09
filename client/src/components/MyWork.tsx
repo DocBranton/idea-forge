@@ -1,32 +1,29 @@
 import { Clock, Users } from "lucide-react";
 import { STAGES, type Project, type StageId } from "@/lib/data";
 
-interface BoardProps {
+interface MyWorkProps {
   projects: Project[];
+  owner: string;
   query: string;
   onStage: (id: StageId) => void;
-  onPing: (msg: string) => void;
+  onStart: () => void;
 }
 
 const stageOf = (id: StageId) => STAGES.find((s) => s.id === id)!;
 
-function matches(query: string, ...fields: string[]) {
+/** Work owned by the signed-in person. */
+export function MyWork({ projects, owner, query, onStage, onStart }: MyWorkProps) {
   const q = query.trim().toLowerCase();
-  return !q || fields.join(" ").toLowerCase().includes(q);
-}
-
-/** Home: projects in flight. */
-export function Board({ projects, query, onStage, onPing }: BoardProps) {
-  const mine = projects.filter((p) => matches(query, p.title, p.problem, p.owner, p.unit, p.stage));
+  const mine = projects.filter((p) => p.owner === owner && (!q || `${p.title} ${p.problem}`.toLowerCase().includes(q)));
   return (
-    <div className="board">
-      <section className="panel projects" id="projects">
+    <div className="stack">
+      <section className="panel projects">
         <header>
-          <h3>Projects in flight</h3>
+          <h3>My Work</h3>
           <span>{mine.length}</span>
         </header>
         {mine.length === 0 ? (
-          <p className="empty">No projects match “{query}”.</p>
+          <p className="empty">Nothing is assigned to {owner} yet.</p>
         ) : (
           <ul>
             {mine.map((p) => {
@@ -45,7 +42,7 @@ export function Board({ projects, query, onStage, onPing }: BoardProps) {
                       ))}
                     </div>
                     <div className="meta">
-                      <span>{p.owner} · {p.unit}</span>
+                      <span>{p.unit}</span>
                       <span><Users size={12} /> {p.collaborators}</span>
                       <span><Clock size={12} /> {p.updated}</span>
                     </div>
@@ -55,8 +52,8 @@ export function Board({ projects, query, onStage, onPing }: BoardProps) {
             })}
           </ul>
         )}
+        <button type="button" className="btn-idea work-start" onClick={onStart}>Start my own project</button>
       </section>
-
     </div>
   );
 }

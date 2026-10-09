@@ -10,7 +10,7 @@ Turning bold ideas into mission-ready capabilities. One Databricks app: AppKit i
 - **UMW identity cluster**: Ask your Wingman, Air Force / Army / Navy switch, welcome and last logon, and the decisions bell. Concept persona is Gen. John Duselis, AFLCMC / RSO, until a real sign-in arrives. Wingman answers are local, same as the UMW first slice.
 - **Hero** with the headline, Start My Own Project, and the six-stage pipeline: Define, Discover, Design, Validate, Produce, Field.
 - **Collapse tab.** The tab under the hero folds it vertically into a single band that keeps the headline, the call to action and the pipeline. The choice is remembered per browser. Below 1720 px wide the band shows the pipeline only.
-- **Home board**: projects in flight with their stage, open challenges, and the capability network. Search filters all three.
+- **Menu**: Home, Community, and My Work. Challenges and Capabilities are dropped. Home is projects in flight. Community is people and shared work. My Work is the signed-in owner's queue.
 - **Stage pages** for each of the six stages. Design and Validate open UMW's CAD workspace; the other four list the projects at that stage and are marked as concept.
 - **Start My Own Project** adds a project at Define.
 

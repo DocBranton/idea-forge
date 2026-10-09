@@ -1,19 +1,20 @@
 import { useCallback, useEffect, useState } from "react";
 import {
-  Boxes,
   ChevronLeft,
+  ClipboardList,
   Cog,
-  FolderKanban,
   House,
   Menu,
   PenTool,
   Search,
   ShieldCheck,
+  Users,
   SlidersHorizontal,
-  Target,
 } from "lucide-react";
 import { Hero } from "./Hero";
 import { Board } from "./Board";
+import { Community } from "./Community";
+import { MyWork } from "./MyWork";
 import { StageView } from "./StageView";
 import { IdeaModal, type IdeaDraft } from "./IdeaModal";
 import { WingmanCluster, serviceOf, type ServiceId } from "./Wingman";
@@ -55,7 +56,7 @@ function personFrom(email: string | null, id: string): Me {
   return { name, org: "U.S. Air Force", initials: initials.toUpperCase() };
 }
 
-type View = { kind: "home" } | { kind: "stage"; stage: StageId };
+type View = { kind: "home" } | { kind: "community" } | { kind: "work" } | { kind: "stage"; stage: StageId };
 
 export function App() {
   const [view, setView] = useState<View>({ kind: "home" });
@@ -105,8 +106,8 @@ export function App() {
 
   function openNotice(id: string) {
     if (id === "pool") {
-      navigate({ kind: "home" });
-      ping("NDT / CT scanning is on the capability network.");
+      navigate({ kind: "community" });
+      ping("NDT / CT scanning is with the community.");
       return;
     }
     navigate({ kind: "stage", stage: id === "gate" ? "validate" : "design" });
@@ -161,9 +162,8 @@ export function App() {
   const stage = view.kind === "stage" ? view.stage : null;
   const navItems: { id: string; label: string; Icon: typeof House; on: boolean; go: () => void }[] = [
     { id: "home", label: "Home", Icon: House, on: view.kind === "home", go: () => navigate({ kind: "home" }) },
-    { id: "projects", label: "My Projects", Icon: FolderKanban, on: false, go: () => goHomeSection("projects") },
-    { id: "challenges", label: "Challenges", Icon: Target, on: false, go: () => goHomeSection("challenges") },
-    { id: "capabilities", label: "Capabilities", Icon: Boxes, on: false, go: () => goHomeSection("capabilities") },
+    { id: "community", label: "Community", Icon: Users, on: view.kind === "community", go: () => navigate({ kind: "community" }) },
+    { id: "work", label: "My Work", Icon: ClipboardList, on: view.kind === "work", go: () => navigate({ kind: "work" }) },
   ];
   const toolItems = [
     { id: "design", label: "Design Studio", Icon: PenTool, on: stage === "design", go: () => navigate({ kind: "stage", stage: "design" }) },
@@ -220,7 +220,7 @@ export function App() {
               value={query}
               onChange={(e) => {
                 setQuery(e.target.value);
-                if (view.kind !== "home") setView({ kind: "home" });
+                if (view.kind === "stage") setView({ kind: "home" });
               }}
               aria-label="Search"
               placeholder="Search projects, people, capabilities, opportunities, or ideas…"
@@ -256,6 +256,16 @@ export function App() {
               onStage={(id) => navigate({ kind: "stage", stage: id })}
               onHome={() => navigate({ kind: "home" })}
               onPing={ping}
+            />
+          ) : view.kind === "community" ? (
+            <Community projects={projects} query={query} onStage={(id) => navigate({ kind: "stage", stage: id })} />
+          ) : view.kind === "work" ? (
+            <MyWork
+              projects={projects}
+              owner={me.name}
+              query={query}
+              onStage={(id) => navigate({ kind: "stage", stage: id })}
+              onStart={() => setModal("project")}
             />
           ) : (
             <Board projects={projects} query={query} onStage={(id) => navigate({ kind: "stage", stage: id })} onPing={ping} />

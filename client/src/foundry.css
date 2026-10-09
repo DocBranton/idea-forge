@@ -498,9 +498,9 @@ img { display: block; max-width: 100%; }
 .tag.stage-design, .tag.stage-validate { border-color: rgba(62, 224, 255, 0.6); color: #c8f5ff; }
 .tag.stage-produce, .tag.stage-field { border-color: rgba(52, 226, 138, 0.6); color: #c9f8df; }
 
-.board {
+.board, .stack {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  grid-template-columns: 1fr;
   gap: 18px;
   align-items: start;
 }
@@ -809,3 +809,6 @@ button.row:hover { color: var(--cyan); }
   .btn-ai span { display: none; }
   .btn-ai { width: 40px; padding: 0; justify-content: center; }
 }
+
+.stack { display: flex; flex-direction: column; gap: 18px; }
+.work-start { margin: 14px 16px 16px; }

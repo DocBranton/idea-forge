@@ -86,6 +86,16 @@ export interface Project {
 
 export const PROJECTS: Project[] = [
   {
+    id: "p-stand",
+    title: "Adjustable maintenance stand for C-17",
+    problem: "The line stand does not reach the hinge line without a second crew and a spotter.",
+    owner: "Gen. John Duselis",
+    unit: "AFLCMC / RSO",
+    stage: "define",
+    updated: "2 h ago",
+    collaborators: 2,
+  },
+  {
     id: "p-uas-mount",
     title: "Quick-swap sensor mount for Group 2 UAS",
     problem: "Swapping EO/IR payloads takes 40 minutes and a toolkit on the flight line.",
