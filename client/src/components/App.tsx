@@ -5,6 +5,8 @@ import {
   Cog,
   House,
   Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
   PenTool,
   Search,
   ShieldCheck,
@@ -23,6 +25,7 @@ import { WingmanCluster, serviceOf, type ServiceId } from "./Wingman";
 import { PROJECTS, type Project, type StageId } from "@/lib/data";
 
 const HERO_KEY = "foundry-hero-collapsed";
+const RAIL_KEY = "forge-rail";
 const SERVICE_KEY = "forge-service";
 
 // Browser storage is a per-viewer convenience here; the page works without it.
@@ -70,6 +73,7 @@ export function App() {
   const [challengesOpen, setChallengesOpen] = useState(false);
   const [modal, setModal] = useState<"idea" | "project" | null>(null);
   const [navOpen, setNavOpen] = useState(false);
+  const [rail, setRail] = useState(() => readFlag(RAIL_KEY));
   const [toast, setToast] = useState("");
   const [me, setMe] = useState<Me>(CONCEPT_USER);
   const [signedIn, setSignedIn] = useState(false);
@@ -175,9 +179,18 @@ export function App() {
   ];
 
   return (
-    <div className={navOpen ? "app nav-open" : "app"}>
+    <div className={["app", navOpen ? "nav-open" : "", rail ? "rail" : ""].filter(Boolean).join(" ")}>
       <button className="nav-scrim" aria-label="Close menu" onClick={() => setNavOpen(false)} />
       <aside className="sidebar">
+        <button
+          type="button"
+          className="rail-toggle"
+          onClick={() => setRail((value) => { writeFlag(RAIL_KEY, !value); return !value; })}
+          aria-label={rail ? "Expand navigation" : "Collapse navigation"}
+          title={rail ? "Expand navigation" : "Collapse navigation"}
+        >
+          {rail ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+        </button>
         <div className="usaf">
           <img src="/brand/usaf-lockup.png" alt="U.S. Air Force" />
         </div>
@@ -193,7 +206,7 @@ export function App() {
         <div className="nav-label">Workspace</div>
         <nav className="nav-list">
           {navItems.map(({ id, label, Icon, on, go }) => (
-            <button key={id} type="button" className={on ? "nav-item on" : "nav-item"} onClick={go}>
+            <button key={id} type="button" className={on ? "nav-item on" : "nav-item"} onClick={go} title={label}>
               <Icon size={17} /> <span>{label}</span>
             </button>
           ))}
@@ -201,7 +214,7 @@ export function App() {
         <div className="nav-label">Tools</div>
         <nav className="nav-list">
           {toolItems.map(({ id, label, Icon, on, go }) => (
-            <button key={id} type="button" className={on ? "nav-item on" : "nav-item"} onClick={go}>
+            <button key={id} type="button" className={on ? "nav-item on" : "nav-item"} onClick={go} title={label}>
               <Icon size={17} /> <span>{label}</span>
             </button>
           ))}
