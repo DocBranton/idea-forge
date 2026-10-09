@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Hero } from "./Hero";
 import { Board } from "./Board";
+import { Gallery } from "./Gallery";
 import { Community } from "./Community";
 import { MyWork } from "./MyWork";
 import { StageView } from "./StageView";
@@ -64,6 +65,7 @@ export function App() {
   const [collapsed, setCollapsed] = useState(() => readFlag(HERO_KEY));
   const [projects, setProjects] = useState<Project[]>(PROJECTS);
   const [query, setQuery] = useState("");
+  const [galleryOpen, setGalleryOpen] = useState(false);
   const [modal, setModal] = useState<"idea" | "project" | null>(null);
   const [navOpen, setNavOpen] = useState(false);
   const [toast, setToast] = useState("");
@@ -268,7 +270,15 @@ export function App() {
               onStart={() => setModal("project")}
             />
           ) : (
-            <Board projects={projects} query={query} onStage={(id) => navigate({ kind: "stage", stage: id })} onPing={ping} />
+            <>
+              <Gallery
+                query={query}
+                expanded={galleryOpen}
+                onExpand={() => setGalleryOpen(true)}
+                onOpen={(item) => ping(`${item.title} is in the project gallery.`)}
+              />
+              <Board projects={projects} query={query} onStage={(id) => navigate({ kind: "stage", stage: id })} onPing={ping} />
+            </>
           )}
         </div>
       </main>
