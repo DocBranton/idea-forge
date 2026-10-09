@@ -5,7 +5,6 @@ import {
   Cog,
   FolderKanban,
   House,
-  Lightbulb,
   Menu,
   PenTool,
   Search,
@@ -231,9 +230,6 @@ export function App() {
             </button>
           </label>
           <div className="top-actions">
-            <button type="button" className="btn-idea" onClick={() => setModal("idea")}>
-              <Lightbulb size={17} /> <span>Submit an idea</span>
-            </button>
             <WingmanCluster
               service={service}
               onService={chooseService}

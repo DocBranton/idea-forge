@@ -6,13 +6,13 @@ Turning bold ideas into mission-ready capabilities. One Databricks app: AppKit i
 
 ## What is in this first slice
 
-- **Shell** from the concept: Air Force lockup and Idea Forge mark in the sidebar, search, Submit an idea, notifications and the signed-in user in the top bar.
+- **Shell** from the concept: Air Force lockup and Idea Forge mark in the sidebar, search, notifications and the signed-in user in the top bar.
 - **UMW identity cluster**: Ask your Wingman, Air Force / Army / Navy switch, welcome and last logon, and the decisions bell. Concept persona is Gen. John Duselis, AFLCMC / RSO, until a real sign-in arrives. Wingman answers are local, same as the UMW first slice.
 - **Hero** with the headline, Start My Own Project, and the six-stage pipeline: Define, Discover, Design, Validate, Produce, Field.
 - **Collapse tab.** The tab under the hero folds it vertically into a single band that keeps the headline, the call to action and the pipeline. The choice is remembered per browser. Below 1720 px wide the band shows the pipeline only.
 - **Home board**: projects in flight with their stage, open challenges, and the capability network. Search filters all three.
 - **Stage pages** for each of the six stages. Design and Validate open UMW's CAD workspace; the other four list the projects at that stage and are marked as concept.
-- **Submit an idea / Start My Own Project** add a project at Define.
+- **Start My Own Project** adds a project at Define.
 
 Data is the design mock (`client/src/lib/data.ts`). When a slice moves to the warehouse, its query goes in `config/queries/`.
 
