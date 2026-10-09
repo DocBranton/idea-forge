@@ -1,16 +1,19 @@
 import { Clock, Users } from "lucide-react";
 import { STAGES, type Project, type StageId } from "@/lib/data";
+import { Communities } from "./Communities";
+import { Challenges } from "./Challenges";
 
 interface CommunityProps {
   projects: Project[];
   query: string;
   onStage: (id: StageId) => void;
+  onPing: (msg: string) => void;
 }
 
 const stageOf = (id: StageId) => STAGES.find((s) => s.id === id)!;
 
 /** People and shared work across the forge, not the signed-in user's own queue. */
-export function Community({ projects, query, onStage }: CommunityProps) {
+export function Community({ projects, query, onStage, onPing }: CommunityProps) {
   const q = query.trim().toLowerCase();
   const shared = projects.filter((p) => !q || `${p.title} ${p.owner} ${p.unit} ${p.problem}`.toLowerCase().includes(q));
   const people = new Map<string, { unit: string; count: number }>();
@@ -21,6 +24,8 @@ export function Community({ projects, query, onStage }: CommunityProps) {
   }
   return (
     <div className="stack">
+      <Communities query={query} expanded onExpand={() => onPing("Showing all communities.")} onOpen={(name) => onPing(`${name} community.`)} />
+      <Challenges query={query} expanded onExpand={() => onPing("Showing featured challenges.")} onOpen={(title) => onPing(`${title} is open for submissions.`)} />
       <section className="panel">
         <header>
           <h3>Community</h3>

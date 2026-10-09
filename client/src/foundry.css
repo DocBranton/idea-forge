@@ -841,3 +841,29 @@ button.row:hover { color: var(--cyan); }
 .tone-test, .tone-protective { color: #7dE7b8; }
 @media (max-width: 1400px) { .gallery ul { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (max-width: 800px) { .gallery ul { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.communities ul { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.c-card, .ch-card {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 0 0 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(90, 140, 190, 0.28);
+  background: rgba(8, 16, 28, 0.72);
+  text-align: left;
+  overflow: hidden;
+}
+.c-card img, .ch-card img { width: 100%; height: 112px; object-fit: cover; }
+.c-card b, .ch-card b { margin: 8px 10px 0; font-size: 14px; }
+.c-card small, .ch-card small { margin: 0 10px; color: #9fb3c8; font-size: 12px; line-height: 1.35; }
+.challenges ul { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.svc { margin: 8px 10px 0; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: #9fd0ff; }
+.svc-USN { color: #8fd0ff; }
+.svc-USA { color: #d7c07a; }
+.ch-meta { display: flex; flex-wrap: wrap; gap: 8px 12px; margin: 6px 10px 0; color: #8ea4ba; font-size: 12px; }
+.ch-meta svg { margin-right: 4px; }
+@media (max-width: 1100px) {
+  .communities ul, .challenges ul { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

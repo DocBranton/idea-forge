@@ -14,6 +14,7 @@ import {
 import { Hero } from "./Hero";
 import { Board } from "./Board";
 import { Gallery } from "./Gallery";
+import { Challenges } from "./Challenges";
 import { Community } from "./Community";
 import { MyWork } from "./MyWork";
 import { StageView } from "./StageView";
@@ -66,6 +67,7 @@ export function App() {
   const [projects, setProjects] = useState<Project[]>(PROJECTS);
   const [query, setQuery] = useState("");
   const [galleryOpen, setGalleryOpen] = useState(false);
+  const [challengesOpen, setChallengesOpen] = useState(false);
   const [modal, setModal] = useState<"idea" | "project" | null>(null);
   const [navOpen, setNavOpen] = useState(false);
   const [toast, setToast] = useState("");
@@ -260,7 +262,7 @@ export function App() {
               onPing={ping}
             />
           ) : view.kind === "community" ? (
-            <Community projects={projects} query={query} onStage={(id) => navigate({ kind: "stage", stage: id })} />
+            <Community projects={projects} query={query} onStage={(id) => navigate({ kind: "stage", stage: id })} onPing={ping} />
           ) : view.kind === "work" ? (
             <MyWork
               projects={projects}
@@ -276,6 +278,12 @@ export function App() {
                 expanded={galleryOpen}
                 onExpand={() => setGalleryOpen(true)}
                 onOpen={(item) => ping(`${item.title} is in the project gallery.`)}
+              />
+              <Challenges
+                query={query}
+                expanded={challengesOpen}
+                onExpand={() => setChallengesOpen(true)}
+                onOpen={(title) => ping(`${title} is open for submissions.`)}
               />
               <Board projects={projects} query={query} onStage={(id) => navigate({ kind: "stage", stage: id })} onPing={ping} />
             </>
