@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Bell, Send, Sparkles, X } from "lucide-react";
+import { Bell, Sparkles, X } from "lucide-react";
+import type { Project } from "@/lib/data";
 
 export type ServiceId = "airforce" | "army" | "navy";
 
@@ -21,46 +22,75 @@ interface Notice {
   tone: "gate" | "pool" | "micap";
 }
 
-const OPENING =
-  "Wingman online. I can work the selected opportunity — source-of-repair trades, qualification gaps, and aircraft-days recovered.";
+interface Wingman {
+  id: string;
+  name: string;
+  role: string;
+  img: string;
+  focus: string;
+}
 
-function replyTo(text: string, service: ServiceId) {
-  const who = service === "army" ? "assistant" : service === "navy" ? "planner" : "Wingman";
+const WINGMEN: Wingman[] = [
+  { id: "mira", name: "Capt. Mira", role: "Operations Officer", img: "/wingmen/mira.jpg", focus: "the mission picture and the next decision" },
+  { id: "mason", name: "Lt. Mason", role: "Engineer", img: "/wingmen/mason.jpg", focus: "the technical package and what is still unproven" },
+  { id: "arden", name: "Chief Arden", role: "Mentor", img: "/wingmen/arden.jpg", focus: "what has to be true before we commit" },
+  { id: "nova", name: "Nova", role: "Technical Analyst", img: "/wingmen/nova.jpg", focus: "the evidence and the gaps" },
+  { id: "echo", name: "Echo", role: "Readiness", img: "/wingmen/echo.jpg", focus: "aircraft-days, lead time, and capacity" },
+];
+
+const WING_KEY = "forge-wingman";
+
+function replyTo(text: string, wing: Wingman, project: Project | undefined) {
+  const subject = project ? `${project.title}` : "the selected work";
   const lower = text.toLowerCase();
-  if (lower.includes("hinge") || lower.includes("c-17")) {
-    return "C-17 door hinge bracket is in Validate. Forged lead time is 270 days and the aircraft is grounded while waiting. A printed bracket is the trade if the qualification package clears AFLCMC.";
+  if (lower.includes("source") || lower.includes("lead") || lower.includes("cost") || lower.includes("trade")) {
+    return `${wing.name.split(" ").slice(-1)[0]}: for ${subject}, organic print is the short trade and the forged source is the long one. Lead time is the constraint, not the drawing. I am watching ${wing.focus}.`;
   }
-  if (lower.includes("sensor") || lower.includes("group 2")) {
-    return "Group 2 UAS sensor mount is in Design. Swapping EO/IR payloads takes 40 minutes and a toolkit on the flight line. Next step is a quick-swap interface that holds the current envelope.";
+  if (lower.includes("qual") || lower.includes("airworth") || lower.includes("gap")) {
+    return `Qualification still open on ${subject}: material allowables, the flight-line fit check, and the AFLCMC sign-off. ${wing.name.split(" ").slice(-1)[0]} would not commit until those three are on the trail.`;
   }
-  if (lower.includes("challenge") || lower.includes("suas") || lower.includes("battery")) {
-    return "Open challenges on the board: counter-sUAS detection at austere sites, forward repair of composite skins, and cold-weather battery management. I can open the one that matches the aircraft.";
+  if (project) {
+    return `${wing.name.split(" ").slice(-1)[0]} on ${subject}. ${project.problem} Owner is ${project.owner}, ${project.unit}, stage ${project.stage}. I am watching ${wing.focus}.`;
   }
-  return `${who} on station. I can compare a source-of-repair trade, flag a tech-data gap, or point at the stage that owns this idea. Ask about the C-17 hinge, the Group 2 sensor mount, or an open challenge.`;
+  return `${wing.name.split(" ").slice(-1)[0]} on station. Pick a project in flight and I can trade the source of repair, flag the qualification gaps, or open the engineering thread.`;
 }
 
 export function WingmanCluster({
   service,
   onService,
   signedIn,
+  projects,
   onOpenNotice,
+  onOpenStage,
 }: {
   service: ServiceId;
   onService: (id: ServiceId) => void;
   signedIn: { name: string; initials: string } | null;
+  projects: Project[];
   onOpenNotice: (id: string) => void;
+  onOpenStage: (stage: Project["stage"]) => void;
 }) {
   const persona = serviceOf(service);
   const name = signedIn?.name ?? persona.name;
   const initials = signedIn?.initials ?? persona.initials;
   const [open, setOpen] = useState(false);
+  const [picker, setPicker] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
   const [notices, setNotices] = useState<Notice[]>([
     { id: "gate", object: "C-17 Door Hinge Bracket", exception: "Requirements ready to accept", action: "Accept", tone: "gate" },
     { id: "pool", object: "NDT / CT scanning", exception: "Pool at 184% · slips the hinge", action: "Review", tone: "pool" },
     { id: "micap", object: "C-17 Door Hinge Bracket", exception: "MICAP escalation", action: "Open", tone: "micap" },
   ]);
-  const [chat, setChat] = useState<{ role: "bot" | "user"; text: string }[]>([{ role: "bot", text: OPENING }]);
+  const [wingId, setWingId] = useState(() => {
+    try {
+      return window.localStorage.getItem(WING_KEY) || "mira";
+    } catch {
+      return "mira";
+    }
+  });
+  const wing = WINGMEN.find((item) => item.id === wingId) ?? WINGMEN[0];
+  const selected = projects.find((item) => item.id === "p-c17-hinge") ?? projects[0];
+  const [chat, setChat] = useState<{ role: "bot" | "user"; text: string }[]>([]);
   const [draft, setDraft] = useState("");
   const thread = useRef<HTMLDivElement>(null);
 
@@ -68,17 +98,30 @@ export function WingmanCluster({
     thread.current?.scrollTo({ top: thread.current.scrollHeight });
   }, [chat, open]);
 
+  function chooseWing(id: string) {
+    setWingId(id);
+    try {
+      window.localStorage.setItem(WING_KEY, id);
+    } catch {
+      /* private window */
+    }
+  }
+
   function ask(text: string) {
     const trimmed = text.trim();
     if (!trimmed) return;
-    setChat((rows) => [...rows, { role: "user", text: trimmed }, { role: "bot", text: replyTo(trimmed, service) }]);
+    const next = WINGMEN.find((item) => item.id === wingId) ?? WINGMEN[0];
+    setChat((rows) => [...rows, { role: "user", text: trimmed }, { role: "bot", text: replyTo(trimmed, next, selected) }]);
     setDraft("");
+    setPicker(false);
     setOpen(true);
   }
 
+  const callsign = wing.name.split(" ").slice(-1)[0];
+
   return (
     <>
-      <button type="button" className="btn-ai" onClick={() => setOpen(true)}>
+      <button type="button" className="btn-ai" onClick={() => { setPicker(false); setOpen(true); }}>
         <Sparkles size={14} /> <span>{persona.ask}</span>
       </button>
       <div className="svc-switch" role="group" aria-label="Signed-in service">
@@ -101,13 +144,7 @@ export function WingmanCluster({
       </div>
       <div className={notesOpen ? "bell-wrap open" : "bell-wrap"}>
         {notesOpen ? <button className="note-scrim" aria-label="Close decisions" onClick={() => setNotesOpen(false)} /> : null}
-        <button
-          type="button"
-          className="icon-btn bell"
-          title="Decisions"
-          aria-expanded={notesOpen}
-          onClick={() => setNotesOpen((value) => !value)}
-        >
+        <button type="button" className="icon-btn bell" title="Decisions" aria-expanded={notesOpen} onClick={() => setNotesOpen((value) => !value)}>
           <Bell size={20} />
           {notices.length > 0 ? <span className="badge-count">{notices.length}</span> : null}
         </button>
@@ -117,26 +154,13 @@ export function WingmanCluster({
               <h3>DECISIONS</h3>
               <span>{notices.length} open</span>
             </header>
-            {notices.length === 0 ? (
-              <p className="note-empty">Nothing is waiting on you.</p>
-            ) : (
-              notices.map((note) => (
-                <button
-                  key={note.id}
-                  type="button"
-                  className={`note ${note.tone}`}
-                  onClick={() => {
-                    setNotices((list) => list.filter((item) => item.id !== note.id));
-                    setNotesOpen(false);
-                    onOpenNotice(note.id);
-                  }}
-                >
-                  <strong>{note.object}</strong>
-                  <b>{note.action}</b>
-                  <em>{note.exception}</em>
-                </button>
-              ))
-            )}
+            {notices.length === 0 ? <p className="note-empty">Nothing is waiting on you.</p> : notices.map((note) => (
+              <button key={note.id} type="button" className={`note ${note.tone}`} onClick={() => { setNotices((list) => list.filter((item) => item.id !== note.id)); setNotesOpen(false); onOpenNotice(note.id); }}>
+                <strong>{note.object}</strong>
+                <b>{note.action}</b>
+                <em>{note.exception}</em>
+              </button>
+            ))}
           </div>
         ) : null}
       </div>
@@ -144,44 +168,61 @@ export function WingmanCluster({
       <div className={open ? "drawer-backdrop open" : "drawer-backdrop"} onClick={() => setOpen(false)} />
       <aside className={open ? "drawer open" : "drawer"} aria-label={persona.ask}>
         <header className="drawer-h">
-          <div>
-            <h3>{persona.ask.toUpperCase()}</h3>
-            <p>{persona.org}</p>
-          </div>
-          <button type="button" className="icon-btn" aria-label="Close wingman" onClick={() => setOpen(false)}>
-            <X size={16} />
-          </button>
-        </header>
-        <div className="drawer-thread" ref={thread}>
-          {chat.map((msg, i) => (
-            <div key={i} className={`msg ${msg.role}`}>
-              <span className="msg-kicker">{msg.role === "bot" ? persona.ask : name}</span>
-              {msg.text}
+          <div className="wing-id">
+            <img className="wing-face" src={wing.img} alt="" />
+            <div>
+              <h3>{wing.name}</h3>
+              <p><i className="wing-online" /> {wing.role}</p>
             </div>
-          ))}
-        </div>
-        <div className="wing-prompts">
-          <button type="button" onClick={() => ask("Walk the C-17 hinge trade")}>C-17 hinge trade</button>
-          <button type="button" onClick={() => ask("What is waiting on the Group 2 sensor mount?")}>Group 2 sensor mount</button>
-          <button type="button" onClick={() => ask("Which open challenge should we pull forward?")}>Open challenges</button>
-        </div>
-        <form
-          className="drawer-input"
-          onSubmit={(event) => {
-            event.preventDefault();
-            ask(draft);
-          }}
-        >
-          <input
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            placeholder="Ask about a project, a gap, or a trade…"
-            aria-label="Ask your Wingman"
-          />
-          <button type="submit" aria-label="Send">
-            <Send size={16} />
-          </button>
-        </form>
+          </div>
+          <div className="wing-tools">
+            <button type="button" className="wing-change" onClick={() => setPicker((value) => !value)}>{picker ? "Back" : "Change"}</button>
+            <button type="button" className="icon-btn" aria-label="Close wingman" onClick={() => setOpen(false)}><X size={16} /></button>
+          </div>
+        </header>
+        {picker ? (
+          <div className="persona-grid">
+            <p>Different perspectives. Same mission.</p>
+            {WINGMEN.map((person) => (
+              <button key={person.id} type="button" className={person.id === wing.id ? "persona on" : "persona"} onClick={() => { chooseWing(person.id); setPicker(false); }}>
+                <img src={person.img} alt="" />
+                <span className="persona-copy">
+                  <strong>{person.name}</strong>
+                  <em>{person.role}</em>
+                  <span>{person.focus}</span>
+                </span>
+                <b>{person.id === wing.id ? "On duty" : "Select"}</b>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <>
+            <div className="drawer-thread" ref={thread}>
+              <div className="insight">
+                <strong>{callsign}'s insight</strong>
+                <p>
+                  {selected ? `${selected.title}. ${selected.problem} ${selected.owner} owns it at ${selected.unit}. ` : "No project is selected. "}
+                  {callsign} is watching {wing.focus}.
+                </p>
+              </div>
+              <ol className="wing-next">
+                <li><button type="button" onClick={() => { setOpen(false); onOpenStage("design"); }}>Open the engineering thread</button></li>
+                <li><button type="button" onClick={() => ask("Trade the sources of repair")}>Compare cost and lead time</button></li>
+                <li><button type="button" onClick={() => ask("What qualification is still open?")}>Review airworthiness gaps</button></li>
+              </ol>
+              {chat.map((msg, i) => (
+                <div key={i} className={`msg ${msg.role}`}>
+                  <span className="msg-kicker">{msg.role === "bot" ? callsign : "You"}</span>
+                  {msg.text}
+                </div>
+              ))}
+            </div>
+            <form className="drawer-input" onSubmit={(event) => { event.preventDefault(); ask(draft); }}>
+              <input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={`Ask ${callsign} about the ${selected?.title.toLowerCase() ?? "work"}…`} aria-label="Ask your Wingman" />
+              <button type="submit" aria-label="Send"><Sparkles size={16} /></button>
+            </form>
+          </>
+        )}
       </aside>
     </>
   );

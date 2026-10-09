@@ -251,7 +251,9 @@ export function App() {
               service={service}
               onService={chooseService}
               signedIn={signedIn ? { name: me.name, initials: me.initials } : null}
+              projects={projects}
               onOpenNotice={openNotice}
+              onOpenStage={(stage) => navigate({ kind: "stage", stage })}
             />
           </div>
         </header>

@@ -893,3 +893,22 @@ button.row:hover { color: var(--cyan); }
 .app.rail .foundry-mark .gear { width: 36px; height: 36px; }
 .app.rail .nav-item { justify-content: center; padding: 0; }
 .app.rail .nav-list { padding: 0 8px; }
+.wing-id { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.wing-face { width: 48px; height: 48px; border-radius: 10px; object-fit: cover; border: 2px solid rgba(167, 139, 250, 0.7); }
+.wing-online { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #3ddc97; margin-right: 6px; }
+.wing-tools { display: flex; align-items: center; gap: 8px; }
+.wing-change { border: 1px solid rgba(167, 139, 250, 0.45); border-radius: 999px; padding: 6px 12px; color: #ddd6fe; font-size: 12.5px; }
+.persona-grid { flex: 1; overflow: auto; display: flex; flex-direction: column; gap: 8px; padding: 12px 14px 16px; }
+.persona-grid > p { color: #a9bbcf; font-size: 13px; }
+.persona { display: grid; grid-template-columns: 54px 1fr auto; gap: 10px; align-items: center; padding: 8px; border-radius: 10px; border: 1px solid rgba(139, 92, 246, 0.28); text-align: left; }
+.persona.on { border-color: rgba(167, 139, 250, 0.8); background: rgba(139, 92, 246, 0.12); }
+.persona img { width: 54px; height: 54px; border-radius: 8px; object-fit: cover; }
+.persona-copy { display: flex; flex-direction: column; gap: 2px; }
+.persona-copy em, .persona-copy span { color: #b7c3d6; font-size: 12px; font-style: normal; }
+.persona > b { color: #c4b5fd; font-size: 12px; }
+.insight { padding: 10px 12px; border-radius: 12px; background: rgba(139, 92, 246, 0.12); border: 1px solid rgba(167, 139, 250, 0.28); }
+.insight strong { display: block; color: #c4b5fd; font-size: 12px; margin-bottom: 4px; }
+.insight p { font-size: 14px; line-height: 1.4; }
+.wing-next { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.wing-next button { width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(120, 170, 220, 0.28); color: #d7e7f8; }
+.wing-next button:hover { border-color: rgba(126, 200, 255, 0.7); }
