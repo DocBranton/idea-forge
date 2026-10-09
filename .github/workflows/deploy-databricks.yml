@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: idea-foundry-databricks
+  group: idea-forge-databricks
   cancel-in-progress: false
 
 jobs:
@@ -31,7 +31,7 @@ jobs:
         uses: databricks/setup-cli@main
       - name: Stage app source
         run: |
-          mkdir -p "$RUNNER_TEMP/idea-foundry-deploy"
+          mkdir -p "$RUNNER_TEMP/idea-forge-deploy"
           rsync -a \
             --exclude='.git' \
             --exclude='.github' \
@@ -39,24 +39,24 @@ jobs:
             --exclude='dist' \
             --exclude='client/dist' \
             --exclude='.env*' \
-            ./ "$RUNNER_TEMP/idea-foundry-deploy/"
+            ./ "$RUNNER_TEMP/idea-forge-deploy/"
       - name: Upload app source
-        run: databricks workspace import-dir "$RUNNER_TEMP/idea-foundry-deploy" /Workspace/Shared/idea-foundry --overwrite
+        run: databricks workspace import-dir "$RUNNER_TEMP/idea-forge-deploy" /Workspace/Shared/idea-forge --overwrite
       - name: Ensure the idea-foundry app exists
         run: |
-          if databricks apps get idea-foundry --output json >/tmp/idea-foundry-app.json 2>/tmp/idea-foundry-app.err; then
-            echo "App idea-foundry already exists"
+          if databricks apps get idea-forge --output json >/tmp/idea-forge-app.json 2>/tmp/idea-forge-app.err; then
+            echo "App idea-forge already exists"
           else
-            echo "Creating app idea-foundry"
-            databricks apps create --json '{"name":"idea-foundry","description":"Idea Foundry"}'
+            echo "Creating app idea-forge"
+            databricks apps create --json '{"name":"idea-forge","description":"Idea Foundry"}'
           fi
       - name: Deploy idea-foundry
-        run: databricks apps deploy idea-foundry --source-code-path /Workspace/Shared/idea-foundry
+        run: databricks apps deploy idea-forge --source-code-path /Workspace/Shared/idea-forge
       - name: Check app status
         run: |
           for i in $(seq 1 40); do
-            state=$(databricks apps get idea-foundry --output json | jq -r '.app_status.state // empty')
-            url=$(databricks apps get idea-foundry --output json | jq -r '.url // empty')
+            state=$(databricks apps get idea-forge --output json | jq -r '.app_status.state // empty')
+            url=$(databricks apps get idea-forge --output json | jq -r '.url // empty')
             echo "Attempt $i/40: ${state:-unknown} ${url}"
             if [ "$state" = RUNNING ]; then
               echo "APP_URL=$url"
@@ -64,6 +64,6 @@ jobs:
             fi
             sleep 15
           done
-          echo "::error::idea-foundry did not reach RUNNING status."
-          databricks apps get idea-foundry --output json
+          echo "::error::idea-forge did not reach RUNNING status."
+          databricks apps get idea-forge --output json
           exit 1
