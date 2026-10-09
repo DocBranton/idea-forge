@@ -1,9 +1,9 @@
 name: Deploy Idea Forge to Databricks
 
-# Manual until the DATABRICKS_TOKEN secret is set on DocBranton/idea-forge.
-# Then add:  push: { branches: [main] }
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
 
 permissions:
   contents: read
@@ -27,6 +27,17 @@ jobs:
             echo "::error::Add the DATABRICKS_TOKEN repository secret on DocBranton/idea-forge. A token on another repo is not visible here."
             exit 1
           fi
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Build application
+        run: npm run build
       - name: Install Databricks CLI
         uses: databricks/setup-cli@main
       - name: Stage app source
