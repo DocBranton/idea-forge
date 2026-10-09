@@ -42,7 +42,7 @@ jobs:
             ./ "$RUNNER_TEMP/idea-forge-deploy/"
       - name: Upload app source
         run: databricks workspace import-dir "$RUNNER_TEMP/idea-forge-deploy" /Workspace/Shared/idea-forge --overwrite
-      - name: Ensure the idea-foundry app exists
+      - name: Ensure the idea-forge app exists
         run: |
           if databricks apps get idea-forge --output json >/tmp/idea-forge-app.json 2>/tmp/idea-forge-app.err; then
             echo "App idea-forge already exists"
@@ -50,7 +50,7 @@ jobs:
             echo "Creating app idea-forge"
             databricks apps create --json '{"name":"idea-forge","description":"Idea Foundry"}'
           fi
-      - name: Deploy idea-foundry
+      - name: Deploy idea-forge
         run: databricks apps deploy idea-forge --source-code-path /Workspace/Shared/idea-forge
       - name: Check app status
         run: |
