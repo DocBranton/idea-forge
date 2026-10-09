@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { ArrowLeft, ArrowRight, Check, ClipboardList, Plus, Trash2, Users, X } from "lucide-react";
 import { COMMUNITIES } from "./Communities";
 import { STAGES, type StageId } from "@/lib/data";
@@ -62,7 +62,7 @@ export function CommunityProjects({ query, signedInName, onStage }: {
   const current = projects.find((p) => p.id === selected);
   const visible = projects.filter((p) => p.communityId === community && (!q || [p.title, p.problem, p.outcome, p.owner].join(" ").toLowerCase().includes(q)));
   function save(next: SharedProject[]) { setProjects(next); persist(next); }
-  function create(e: React.FormEvent<HTMLFormElement>) {
+  function create(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!title.trim() || !problem.trim()) return;
     const project: SharedProject = {
@@ -75,7 +75,7 @@ export function CommunityProjects({ query, signedInName, onStage }: {
     setCreating(false); setSelected(project.id); setTab("Overview");
     setTitle(""); setProblem(""); setOutcome("");
   }
-  function addMember(e: React.FormEvent<HTMLFormElement>) {
+  function addMember(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!current || !memberName.trim()) return;
     const member: TeamMember = { id: String(Date.now()), name: memberName.trim(), role: memberRole, organization: memberOrg.trim() };
