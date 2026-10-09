@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import {
-  Bell,
   Boxes,
-  ChevronDown,
   ChevronLeft,
   Cog,
   FolderKanban,
@@ -19,9 +17,11 @@ import { Hero } from "./Hero";
 import { Board } from "./Board";
 import { StageView } from "./StageView";
 import { IdeaModal, type IdeaDraft } from "./IdeaModal";
+import { WingmanCluster, serviceOf, type ServiceId } from "./Wingman";
 import { PROJECTS, type Project, type StageId } from "@/lib/data";
 
 const HERO_KEY = "foundry-hero-collapsed";
+const SERVICE_KEY = "forge-service";
 
 // Browser storage is a per-viewer convenience here; the page works without it.
 function readFlag(key: string) {
@@ -45,8 +45,8 @@ interface Me {
   initials: string;
 }
 
-// The concept's persona, shown until the Databricks Apps sign-in says otherwise.
-const CONCEPT_USER: Me = { name: "Capt. T. Anderson", org: "U.S. Air Force", initials: "TA" };
+// UMW concept persona, shown until a Databricks Apps sign-in says otherwise.
+const CONCEPT_USER: Me = { name: "Gen. John Duselis", org: "AFLCMC / RSO", initials: "JD" };
 
 function personFrom(email: string | null, id: string): Me {
   const handle = (email ?? id).split("@")[0];
@@ -68,15 +68,50 @@ export function App() {
   const [navOpen, setNavOpen] = useState(false);
   const [toast, setToast] = useState("");
   const [me, setMe] = useState<Me>(CONCEPT_USER);
+  const [signedIn, setSignedIn] = useState(false);
+  const [service, setService] = useState<ServiceId>(() => {
+    try {
+      const saved = window.localStorage.getItem(SERVICE_KEY);
+      if (saved === "airforce" || saved === "army" || saved === "navy") return saved;
+    } catch {
+      /* private window */
+    }
+    return "airforce";
+  });
 
   useEffect(() => {
     fetch("/api/me")
       .then((r) => (r.ok ? r.json() : null))
       .then((u: { id: string; email: string | null } | null) => {
-        if (u && u.id !== "local-dev") setMe(personFrom(u.email, u.id));
+        if (u && u.id !== "local-dev") {
+          setMe(personFrom(u.email, u.id));
+          setSignedIn(true);
+        }
       })
       .catch(() => {});
   }, []);
+
+  function chooseService(next: ServiceId) {
+    setService(next);
+    try {
+      window.localStorage.setItem(SERVICE_KEY, next);
+    } catch {
+      /* private window */
+    }
+    if (!signedIn) {
+      const persona = serviceOf(next);
+      setMe({ name: persona.name, org: persona.org, initials: persona.initials });
+    }
+  }
+
+  function openNotice(id: string) {
+    if (id === "pool") {
+      navigate({ kind: "home" });
+      ping("NDT / CT scanning is on the capability network.");
+      return;
+    }
+    navigate({ kind: "stage", stage: id === "gate" ? "validate" : "design" });
+  }
 
   const ping = useCallback((msg: string) => {
     setToast(msg);
@@ -199,17 +234,12 @@ export function App() {
             <button type="button" className="btn-idea" onClick={() => setModal("idea")}>
               <Lightbulb size={17} /> <span>Submit an idea</span>
             </button>
-            <button type="button" className="icon-btn bell" aria-label="Notifications" onClick={() => ping("Nothing is waiting on you.")}>
-              <Bell size={20} />
-            </button>
-            <button type="button" className="user" onClick={() => ping(`Signed in as ${me.name}`)}>
-              <span className="avatar">{me.initials}</span>
-              <span className="user-meta">
-                <strong>{me.name}</strong>
-                <span>{me.org}</span>
-              </span>
-              <ChevronDown size={16} />
-            </button>
+            <WingmanCluster
+              service={service}
+              onService={chooseService}
+              signedIn={signedIn ? { name: me.name, initials: me.initials } : null}
+              onOpenNotice={openNotice}
+            />
           </div>
         </header>
 
