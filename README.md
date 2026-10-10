@@ -46,6 +46,8 @@ npm run test:cad
 
 ## Deploy
 
+For the IL5 path, [`.gitlab-ci.yml`](.gitlab-ci.yml) builds, scans, signs and deploys to Databricks from GitLab and collects NIST 800-53 evidence on every run. Setup and the control map are in [docs/07-gitlab-il5-pipeline.md](docs/07-gitlab-il5-pipeline.md).
+
 `databricks bundle deploy` from this directory, or run the **Deploy Idea Forge to Databricks** workflow. The workflow is manual until the `DATABRICKS_TOKEN` secret is added to this repository; then add a `push` trigger on `main`.
 
 ## Hero art
