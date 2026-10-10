@@ -4,6 +4,8 @@ Turning bold ideas into mission-ready capabilities. One Databricks app: AppKit i
 
 ![Concept](docs/concept-hero.png)
 
+Planning docs — product requirements, technical requirements, app flow, design brief, backend schema and implementation plan — are in [`docs/`](docs/README.md).
+
 ## What is in this first slice
 
 - **Shell** from the concept: Air Force lockup and Idea Forge mark in the sidebar, search, notifications and the signed-in user in the top bar.
