@@ -14,6 +14,7 @@
     "sync": "appkit plugin sync --write --silent",
     "typegen": "appkit generate-types",
     "test:cad": "tsx --test \"client/src/cad/**/*.test.ts\"",
+    "test:slicer": "tsx --test \"client/src/slicer/**/*.test.ts\"",
     "test:server": "tsx --test \"server/**/*.test.ts\""
   },
   "license": "UNLICENSED",

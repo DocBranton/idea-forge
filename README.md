@@ -11,7 +11,7 @@ Turning bold ideas into mission-ready capabilities. One Databricks app: AppKit i
 - **Hero** with the headline, Start My Own Project, and the six-stage pipeline: Define, Discover, Design, Validate, Produce, Field.
 - **Collapse tab.** The tab under the hero folds it vertically into a single band that keeps the headline, the call to action and the pipeline. The choice is remembered per browser. Below 1720 px wide the band shows the pipeline only.
 - **Menu**: Home, Community, and My Work. Challenges and Capabilities are dropped. Home is projects in flight. Community is people and shared work. My Work is the signed-in owner's queue.
-- **Stage pages** for each of the six stages. Design and Validate open UMW's CAD workspace; the other four list the projects at that stage and are marked as concept.
+- **Stage pages** for each of the six stages. Design and Validate open UMW's CAD workspace; Produce opens the slicer (below); Define, Discover and Field list the projects at that stage and are marked as concept.
 - **Start My Own Project** adds a project at Define.
 
 Data is the design mock (`client/src/lib/data.ts`). When a slice moves to the warehouse, its query goes in `config/queries/`.
@@ -29,6 +29,33 @@ Copied from `DocBranton/umw` at `8bf07e0`, not imported. Changes are limited to 
 
 The stage pages use the CAD workspace in its stand-alone mode, so reviews are kept in the browser. Wiring it to the shared review trail, as UMW's Engineering view does, is the next step for Validate.
 
+## Slicer (Produce stage)
+
+Produce slices the part last opened in Design or Validate (or one opened on the page) for a 3D printer. The layout follows OrcaSlicer: Prepare and Preview tabs, one settings sidebar (printer, filament, objects, process), a line-type legend with time per feature, and layer and move sliders. The code and icons are Idea Forge's own.
+
+| Engine | Where it runs | Used for | License |
+| --- | --- | --- | --- |
+| [Kiri:Moto](https://github.com/GridSpace/grid-apps) | In the browser, in web workers. Files stay in the browser. | Slice plate, the preview, and G-code for every printer listed | MIT |
+| [OrcaSlicer](https://github.com/OrcaSlicer/OrcaSlicer) | On the server, as a separate program through its command line | **Final G-code with Orca**, for printers the server has Orca profiles for | AGPL-3.0, run unmodified and not linked |
+
+Code: `client/src/slicer/` (screen, Kiri runner, G-code reader, three.js preview, printer profiles), `server/orca.ts` and `server/slice-routes.ts` (`GET /api/slice/status`, `POST /api/slice/orca`).
+
+**Kiri:Moto engine.** `client/public/vendor/kiri/` is built from the grid-apps commit in `scripts/kiri.lock`. To update it, change that line and push to a branch: the **Vendor Kiri:Moto engine** workflow rebuilds the bundle, slices a test cube with it in headless Chromium, and commits the result and a G-code fixture (`client/src/slicer/fixtures/kiri-cube.gcode`) to the branch. Kiri fetches its geometry wasm from `/wasm/`, so that file is also in `client/public/wasm/`. The six printer profiles in `client/src/slicer/kiri-devices.json` are Kiri's own, unchanged.
+
+**Orca on the server.** Off until both are set; the screen then says Orca is unavailable and Kiri's G-code is the export.
+
+| Variable | |
+| --- | --- |
+| `ORCA_SLICER_BIN` | Path to the `orca-slicer` executable |
+| `ORCA_PROFILES_DIR` | One folder per printer id (`prusa-mk3s`, `prusa-mini`, `bambu-p1s`, `bambu-a1`, `creality-ender3`, `creality-k1`) holding `machine.json`, `process.json` and `filament.json` exported from Orca. `filament-pla.json`, `-petg`, `-abs`, `-asa` are used when present |
+| `ORCA_TIMEOUT_MS` | Optional, default 300000 |
+
+The server merges the screen's settings (layer height, walls, shells, infill, supports, brim) over `process.json` and runs `orca-slicer part.stl --load-settings "process.json;machine.json" --load-filaments filament.json --arrange 1 --slice 0 --outputdir …`. One job runs at a time.
+
+Orca is not installed in the Databricks app container: its Linux build is a desktop AppImage with GUI library dependencies. Running it needs a host or container where those are installed (for example a separate slicing service, or a self-hosted deployment of this app).
+
+**Tests.** `npm run test:slicer` covers the G-code reader against the real Kiri fixture, the STL export and the profile mapping; `npm run test:server` runs the Orca routes against a stand-in `orca-slicer` script. The **Slicer e2e** workflow builds the client and, in headless Chromium, slices the sample part with Kiri, checks the preview, and exports through a stubbed Orca route.
+
 ## Run
 
 Requires the Databricks CLI, authenticated to the workspace in `databricks.yml`.
@@ -42,6 +69,8 @@ npm run dev
 npm run typecheck
 npm run build
 npm run test:cad
+npm run test:slicer
+npm run test:server
 ```
 
 ## Deploy
