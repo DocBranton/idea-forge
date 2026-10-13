@@ -69,6 +69,11 @@ test("Orca-style G-code: TYPE comments, absolute E with G92 resets, reported tim
   assert.ok(Math.abs(g.stats["outer-wall"]!.seconds - 0.5) < 1e-9);
 });
 
+test("a purge line above the first layer folds into it", () => {
+  const g = parseGcode(["M83", "G1 Z0.5", "G1 X60 Y-3 E9 ; purge", "G1 Z0.2", "G1 X10 Y10 E1", "G1 Z0.4", "G1 X20 Y10 E1"].join("\n"));
+  assert.deepEqual(g.layers.map((l) => [l.z, l.end - l.start]), [[0.2, 2], [0.4, 1]]);
+});
+
 test("travel and retracts are not extrusions", () => {
   const g = parseGcode(["M83", "G1 Z0.2", "G1 X5 E-1", "G1 X10 E1", "G1 X20 Y0 E0.4"].join("\n"));
   // Only the last move extrudes along XY; the prime at X10 is an unretract with movement,

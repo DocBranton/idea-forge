@@ -188,11 +188,14 @@ export function parseGcode(text: string, opts: ParseOptions = {}): ParsedGcode {
       estimated += secs;
       const extruding = de > 1e-6 && (nx !== x || ny !== y);
       if (extruding) {
-        // A new layer starts wherever extrusion resumes at a different height.
-        // Z-hops are travel moves, so they never open one.
-        if (!layer || Math.abs(nz - layer.z) > 1e-4) {
+        // A new layer starts wherever extrusion resumes higher up. Z-hops are travel
+        // moves, so they never open one. Extrusion that drops lower (a start-G-code purge
+        // line drawn above the first layer) folds into the layer being built.
+        if (!layer || nz > layer.z + 1e-4) {
           layer = { z: nz, start: kinds.length, end: kinds.length };
           layers.push(layer);
+        } else if (nz < layer.z - 1e-4) {
+          layer.z = nz;
         }
         segs.push(x, y, z, nx, ny, nz);
         kinds.push(FEATURE_INDEX[kind]);

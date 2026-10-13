@@ -38,13 +38,27 @@ type Section = "quality" | "strength" | "support" | "others";
 interface Part {
   model: ModelData;
   source: string;
+  /** Mesh indexes on the plate. Fasteners start off it. */
+  included: number[];
 }
+
+const FASTENER = /\b(shcs|bhcs|fhcs|screw|bolt|nut|washer|rivet|fastener)s?\b/i;
+
+/** Every mesh except fasteners, unless that would leave nothing. */
+function plateParts(m: ModelData): number[] {
+  const all = m.meshes.map((_, i) => i);
+  const parts = all.filter((i) => !m.meshes[i].keepColor && !FASTENER.test(m.meshes[i].name));
+  return parts.length ? parts : all;
+}
+
+const partKey = (p: Part) => `${p.model.fileName}|${p.model.meshes.length}|${p.included.join(",")}`;
 
 interface Sliced {
   engine: Engine;
   gcode: string;
   parsed: ParsedGcode;
   settings: SliceSettings;
+  partKey: string;
   ms: number;
   at: Date;
 }
@@ -74,12 +88,14 @@ function saveSettings(s: SliceSettings): void {
 
 function fromHandoff(h: HandoffPart): Part {
   const time = h.openedAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-  return { model: h.model, source: `From the CAD workspace · opened ${time}` };
+  return { model: h.model, source: `From the CAD workspace · opened ${time}`, included: plateParts(h.model) };
 }
 
 function partNow(): Part {
   const h = currentModel();
-  return h ? fromHandoff(h) : { model: buildSampleBracket(), source: "Sample part · open a file or a part in Design" };
+  if (h) return fromHandoff(h);
+  const model = buildSampleBracket();
+  return { model, source: "Sample part · open a file or a part in Design", included: plateParts(model) };
 }
 
 const STAGE_LABEL: Record<SliceStage, string> = {
@@ -127,12 +143,13 @@ export default function SlicerWorkspace({ onPing }: SlicerWorkspaceProps) {
   const ping = useCallback((m: string) => onPing?.(m), [onPing]);
 
   const prn = printer(settings.printer);
-  const bounds = useMemo(() => meshBounds(part.model), [part]);
+  const meshes = useMemo(() => part.included.map((i) => part.model.meshes[i]), [part]);
+  const bounds = useMemo(() => meshBounds(part.model, meshes), [part, meshes]);
   const size = bounds ? ([0, 1, 2].map((a) => bounds.max[a] - bounds.min[a]) as [number, number, number]) : null;
   const problems = fitProblems(size, prn);
   const changed = changedKeys(settings);
   const preset = matchingPreset(settings);
-  const stale = sliced !== null && JSON.stringify(sliced.settings) !== JSON.stringify(settings);
+  const stale = sliced !== null && (JSON.stringify(sliced.settings) !== JSON.stringify(settings) || sliced.partKey !== partKey(part));
   const orcaReady = !!orca?.available && orca.printers.includes(settings.printer);
 
   // Parts opened in Design or Validate while this page is up.
@@ -175,9 +192,9 @@ export default function SlicerWorkspace({ onPing }: SlicerWorkspaceProps) {
     const p = previewRef.current;
     if (!p) return;
     p.setPrinter(prn);
-    p.setPart(part.model.meshes, part.model.mmPerUnit, view !== "preview" || !sliced);
+    p.setPart(meshes, part.model.mmPerUnit, view !== "preview" || !sliced);
     // view and sliced are read once here; the next effect keeps them in sync.
-  }, [prn, part]);
+  }, [prn, meshes]);
   useEffect(() => {
     const p = previewRef.current;
     if (!p) return;
@@ -216,10 +233,10 @@ export default function SlicerWorkspace({ onPing }: SlicerWorkspaceProps) {
   };
 
   const finish = useCallback(
-    (engine: Engine, gcode: string, absoluteE: boolean, ms: number, used: SliceSettings) => {
+    (engine: Engine, gcode: string, absoluteE: boolean, ms: number, used: SliceSettings, key: string) => {
       const parsed = parseGcode(gcode, { absoluteE });
       if (parsed.layers.length === 0) throw new Error("The slicer returned G-code with no printed layers.");
-      setSliced({ engine, gcode, parsed, settings: used, ms, at: new Date() });
+      setSliced({ engine, gcode, parsed, settings: used, partKey: key, ms, at: new Date() });
       setHidden(new Set());
       setView("preview");
       return parsed;
@@ -233,16 +250,16 @@ export default function SlicerWorkspace({ onPing }: SlicerWorkspaceProps) {
     setMenu(false);
     const used = settings;
     try {
-      const stl = modelToStl(part.model);
+      const stl = modelToStl(part.model, meshes);
       const r = await sliceWithKiri(stl, used, (s) => setBusy(STAGE_LABEL[s]));
-      const parsed = finish("kiri", r.gcode, r.absoluteE, r.ms, used);
+      const parsed = finish("kiri", r.gcode, r.absoluteE, r.ms, used, partKey(part));
       ping(`Sliced ${part.model.name}: ${parsed.layers.length} layers in ${(r.ms / 1000).toFixed(1)} s`);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(null);
     }
-  }, [busy, settings, part, finish, ping]);
+  }, [busy, settings, part, meshes, finish, ping]);
 
   const exportGcode = useCallback(() => {
     setMenu(false);
@@ -257,8 +274,8 @@ export default function SlicerWorkspace({ onPing }: SlicerWorkspaceProps) {
     setBusy("Slicing with Orca on the server…");
     const used = settings;
     try {
-      const r = await sliceWithOrca(modelToStl(part.model), used, part.model.fileName);
-      finish("orca", r.gcode, true, r.ms, used);
+      const r = await sliceWithOrca(modelToStl(part.model, meshes), used, part.model.fileName);
+      finish("orca", r.gcode, true, r.ms, used, partKey(part));
       download(r.gcode, `${baseName(part.model.fileName)}-${used.printer}-orca.gcode`);
       ping(`Orca G-code ready for ${prn.name}`);
     } catch (e) {
@@ -266,7 +283,7 @@ export default function SlicerWorkspace({ onPing }: SlicerWorkspaceProps) {
     } finally {
       setBusy(null);
     }
-  }, [busy, orcaReady, settings, part, finish, ping, prn]);
+  }, [busy, orcaReady, settings, part, meshes, finish, ping, prn]);
 
   const openFile = async (e: ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -276,7 +293,7 @@ export default function SlicerWorkspace({ onPing }: SlicerWorkspaceProps) {
     setBusy(`Reading ${f.name}…`);
     try {
       const m = await loadCadFile(f, (msg) => setBusy(msg));
-      setPart({ model: m, source: `Opened here · ${f.name}` });
+      setPart({ model: m, source: `Opened here · ${f.name}`, included: plateParts(m) });
       setSliced(null);
       setView("prepare");
     } catch (err) {
@@ -420,6 +437,27 @@ export default function SlicerWorkspace({ onPing }: SlicerWorkspaceProps) {
               <span>{part.model.name}</span>
               {settings.supports ? <span className="slc-chip">Supports</span> : null}
             </div>
+            {part.model.meshes.length > 1 ? (
+              <ul className="slc-parts" aria-label="Parts on the plate">
+                {part.model.meshes.map((m, i) => (
+                  <li key={`${i}-${m.name}`}>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={part.included.includes(i)}
+                        onChange={(e) =>
+                          setPart((p) => ({
+                            ...p,
+                            included: e.target.checked ? [...p.included, i].sort((a, b) => a - b) : p.included.filter((x) => x !== i),
+                          }))
+                        }
+                      />
+                      <span>{m.name}</span>
+                    </label>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
             <small>{part.source}</small>
             {size ? (
               <small>
