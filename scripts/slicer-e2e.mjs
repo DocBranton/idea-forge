@@ -12,7 +12,7 @@ import { chromium } from "playwright";
 const root = process.argv[2] ?? process.cwd();
 // Optional: a folder to save screenshots of each step into.
 const shots = process.argv[3];
-const shot = async (name) => shots && (await page.screenshot({ path: `${shots}/${name}.png` }));
+const shot = async (name) => shots && (await page.locator(".slc").screenshot({ path: `${shots}/${name}.png` }));
 const dist = join(root, "client/dist");
 const fixture = await readFile(join(root, "client/src/slicer/fixtures/kiri-cube.gcode"), "utf8");
 const TYPES = { ".js": "text/javascript", ".css": "text/css", ".wasm": "application/wasm", ".html": "text/html", ".json": "application/json", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg" };
