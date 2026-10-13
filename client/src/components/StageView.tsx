@@ -5,7 +5,7 @@ import { STAGES, type Project, type StageId } from "@/lib/data";
 // The CAD engine is UMW's, unchanged. three.js and the OpenCascade worker load only
 // when a Design or Validate stage opens.
 const CadWorkspace = lazy(() => import("@/cad/CadWorkspace"));
-// The slicer for Produce: Kiri:Moto in the browser, Orca on the server when installed.
+// The slicer for Produce: Kiri:Moto, in the browser.
 const SlicerWorkspace = lazy(() => import("@/slicer/SlicerWorkspace"));
 
 interface StageViewProps {

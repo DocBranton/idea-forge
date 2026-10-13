@@ -1,16 +1,14 @@
 // Produce stage slicer. Layout and workflow follow OrcaSlicer (Prepare / Preview tabs,
 // one settings sidebar, a line-type legend, layer and move sliders); the code and icons
-// are Idea Forge's own. Kiri:Moto slices in the browser for the preview; Orca makes the
-// final G-code on the server when it is installed there.
+// are Idea Forge's own. Kiri:Moto does the slicing, in the browser; nothing is uploaded.
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
-import { AlertTriangle, Box, ChevronDown, Download, FolderOpen, Home, Layers, Pause, Play, Printer as PrinterIcon } from "lucide-react";
+import { AlertTriangle, Box, Download, FolderOpen, Home, Layers, Pause, Play, Printer as PrinterIcon } from "lucide-react";
 import { currentModel, onModel, type HandoffPart } from "@/cad/handoff";
 import { buildSampleBracket } from "@/cad/engine/sample";
 import { CAD_EXTENSIONS, loadCadFile } from "@/cad/engine/loaders";
 import type { ModelData } from "@/cad/engine/types";
 import { FEATURES, filamentGrams, formatDuration, parseGcode, type FeatureKind, type ParsedGcode } from "./gcode";
 import { sliceWithKiri, type SliceStage } from "./kiri";
-import { orcaStatus, sliceWithOrca, type OrcaStatus } from "./orca";
 import { SlicePreview } from "./preview";
 import {
   DEFAULT_SETTINGS,
@@ -31,7 +29,6 @@ import {
 import { meshBounds, modelToStl } from "./stl";
 import "./slicer.css";
 
-type Engine = "kiri" | "orca";
 type View = "prepare" | "preview" | "printers";
 type Section = "quality" | "strength" | "support" | "others";
 
@@ -54,7 +51,6 @@ function plateParts(m: ModelData): number[] {
 const partKey = (p: Part) => `${p.model.fileName}|${p.model.meshes.length}|${p.included.join(",")}`;
 
 interface Sliced {
-  engine: Engine;
   gcode: string;
   parsed: ParsedGcode;
   settings: SliceSettings;
@@ -130,8 +126,6 @@ export default function SlicerWorkspace({ onPing }: SlicerWorkspaceProps) {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sliced, setSliced] = useState<Sliced | null>(null);
-  const [orca, setOrca] = useState<OrcaStatus | null>(null);
-  const [menu, setMenu] = useState(false);
   const [layer, setLayer] = useState(0);
   const [moves, setMoves] = useState(100);
   const [playing, setPlaying] = useState(false);
@@ -150,7 +144,6 @@ export default function SlicerWorkspace({ onPing }: SlicerWorkspaceProps) {
   const changed = changedKeys(settings);
   const preset = matchingPreset(settings);
   const stale = sliced !== null && (JSON.stringify(sliced.settings) !== JSON.stringify(settings) || sliced.partKey !== partKey(part));
-  const orcaReady = !!orca?.available && orca.printers.includes(settings.printer);
 
   // Parts opened in Design or Validate while this page is up.
   useEffect(
@@ -163,13 +156,6 @@ export default function SlicerWorkspace({ onPing }: SlicerWorkspaceProps) {
     [],
   );
   useEffect(() => saveSettings(settings), [settings]);
-  useEffect(() => {
-    let live = true;
-    void orcaStatus().then((s) => live && setOrca(s));
-    return () => {
-      live = false;
-    };
-  }, []);
 
   // The 3D view.
   useEffect(() => {
@@ -233,10 +219,10 @@ export default function SlicerWorkspace({ onPing }: SlicerWorkspaceProps) {
   };
 
   const finish = useCallback(
-    (engine: Engine, gcode: string, absoluteE: boolean, ms: number, used: SliceSettings, key: string) => {
+    (gcode: string, absoluteE: boolean, ms: number, used: SliceSettings, key: string) => {
       const parsed = parseGcode(gcode, { absoluteE });
       if (parsed.layers.length === 0) throw new Error("The slicer returned G-code with no printed layers.");
-      setSliced({ engine, gcode, parsed, settings: used, partKey: key, ms, at: new Date() });
+      setSliced({ gcode, parsed, settings: used, partKey: key, ms, at: new Date() });
       setHidden(new Set());
       setView("preview");
       return parsed;
@@ -247,12 +233,11 @@ export default function SlicerWorkspace({ onPing }: SlicerWorkspaceProps) {
   const sliceKiri = useCallback(async () => {
     if (busy) return;
     setError(null);
-    setMenu(false);
     const used = settings;
     try {
       const stl = modelToStl(part.model, meshes);
       const r = await sliceWithKiri(stl, used, (s) => setBusy(STAGE_LABEL[s]));
-      const parsed = finish("kiri", r.gcode, r.absoluteE, r.ms, used, partKey(part));
+      const parsed = finish(r.gcode, r.absoluteE, r.ms, used, partKey(part));
       ping(`Sliced ${part.model.name}: ${parsed.layers.length} layers in ${(r.ms / 1000).toFixed(1)} s`);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -262,28 +247,9 @@ export default function SlicerWorkspace({ onPing }: SlicerWorkspaceProps) {
   }, [busy, settings, part, meshes, finish, ping]);
 
   const exportGcode = useCallback(() => {
-    setMenu(false);
     if (!sliced) return;
-    download(sliced.gcode, `${baseName(part.model.fileName)}-${sliced.settings.printer}-${sliced.engine}.gcode`);
+    download(sliced.gcode, `${baseName(part.model.fileName)}-${sliced.settings.printer}.gcode`);
   }, [sliced, part]);
-
-  const exportOrca = useCallback(async () => {
-    setMenu(false);
-    if (busy || !orcaReady) return;
-    setError(null);
-    setBusy("Slicing with Orca on the server…");
-    const used = settings;
-    try {
-      const r = await sliceWithOrca(modelToStl(part.model, meshes), used, part.model.fileName);
-      finish("orca", r.gcode, true, r.ms, used, partKey(part));
-      download(r.gcode, `${baseName(part.model.fileName)}-${used.printer}-orca.gcode`);
-      ping(`Orca G-code ready for ${prn.name}`);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setBusy(null);
-    }
-  }, [busy, orcaReady, settings, part, meshes, finish, ping, prn]);
 
   const openFile = async (e: ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -348,7 +314,7 @@ export default function SlicerWorkspace({ onPing }: SlicerWorkspaceProps) {
           ) : sliced ? (
             <>
               <span className={`slc-dot ${stale ? "stale" : "ok"}`} />
-              {stale ? "Settings changed · slice again" : `Sliced with ${sliced.engine === "orca" ? "Orca" : "Kiri:Moto"}`}
+              {stale ? "Settings changed · slice again" : "Sliced"}
             </>
           ) : (
             "Not sliced yet"
@@ -357,32 +323,9 @@ export default function SlicerWorkspace({ onPing }: SlicerWorkspaceProps) {
         <button type="button" className="slc-btn" disabled={!canSlice} onClick={() => void sliceKiri()}>
           Slice plate
         </button>
-        <div className="slc-split">
-          <button type="button" className="slc-btn primary" disabled={!sliced || !!busy} onClick={exportGcode}>
-            <Download size={15} /> Export G-code
-          </button>
-          <button type="button" className="slc-btn primary caret" aria-label="More export options" aria-expanded={menu} onClick={() => setMenu((m) => !m)}>
-            <ChevronDown size={15} />
-          </button>
-          {menu ? (
-            <div className="slc-menu" role="menu">
-              <button type="button" role="menuitem" disabled={!sliced} onClick={exportGcode}>
-                <b>Download current G-code</b>
-                <small>{sliced ? `${sliced.engine === "orca" ? "Orca" : "Kiri:Moto"} · ${prn.name}` : "Slice the plate first"}</small>
-              </button>
-              <button type="button" role="menuitem" disabled={!orcaReady || !canSlice} onClick={() => void exportOrca()}>
-                <b>Final G-code with Orca</b>
-                <small>
-                  {orcaReady
-                    ? "Slices on the server with this printer's Orca profile"
-                    : orca?.available
-                      ? `No Orca profile for the ${prn.name} on this server`
-                      : (orca?.reason ?? "Checking the server…")}
-                </small>
-              </button>
-            </div>
-          ) : null}
-        </div>
+        <button type="button" className="slc-btn primary" disabled={!sliced || !!busy || stale} title={stale ? "Slice again to export the current settings" : undefined} onClick={exportGcode}>
+          <Download size={15} /> Export G-code
+        </button>
       </div>
 
       <div className="slc-main">
@@ -547,7 +490,7 @@ export default function SlicerWorkspace({ onPing }: SlicerWorkspaceProps) {
 
         <div className="slc-view">
           {view === "printers" ? (
-            <PrinterTable orca={orca} current={settings.printer} onPick={(id) => update("printer", id)} />
+            <PrinterTable current={settings.printer} onPick={(id) => update("printer", id)} />
           ) : null}
           <div className="slc-canvas" ref={hostRef} hidden={view === "printers"} />
 
@@ -676,7 +619,7 @@ export default function SlicerWorkspace({ onPing }: SlicerWorkspaceProps) {
                   </>
                 ) : (
                   <small>
-                    Kiri:Moto slices in this browser; nothing is uploaded. {orca?.available ? "Orca final G-code runs on the server." : ""}
+                    Kiri:Moto slices in this browser; nothing is uploaded.
                   </small>
                 )}
               </div>
@@ -730,7 +673,7 @@ function Num(props: {
   );
 }
 
-function PrinterTable({ orca, current, onPick }: { orca: OrcaStatus | null; current: PrinterId; onPick: (id: PrinterId) => void }) {
+function PrinterTable({ current, onPick }: { current: PrinterId; onPick: (id: PrinterId) => void }) {
   return (
     <div className="slc-printers">
       <table>
@@ -738,8 +681,7 @@ function PrinterTable({ orca, current, onPick }: { orca: OrcaStatus | null; curr
           <tr>
             <th>Printer</th>
             <th>Bed (mm)</th>
-            <th>Preview</th>
-            <th>Final G-code</th>
+            <th>Nozzle (mm)</th>
             <th />
           </tr>
         </thead>
@@ -750,8 +692,7 @@ function PrinterTable({ orca, current, onPick }: { orca: OrcaStatus | null; curr
               <td>
                 {p.bed.w} × {p.bed.d} × {p.bed.h}
               </td>
-              <td>Kiri:Moto</td>
-              <td>{orca?.available && orca.printers.includes(p.id) ? "Orca" : "Kiri:Moto"}</td>
+              <td>{p.nozzle}</td>
               <td>
                 {p.id === current ? (
                   <span className="slc-chip">Selected</span>
@@ -765,11 +706,7 @@ function PrinterTable({ orca, current, onPick }: { orca: OrcaStatus | null; curr
           ))}
         </tbody>
       </table>
-      <p className="slc-note">
-        {orca?.available
-          ? `Orca is installed on this server with profiles for ${orca.printers.length} printer${orca.printers.length === 1 ? "" : "s"}.`
-          : `Orca is not available here${orca?.reason ? `: ${orca.reason}` : "."} Kiri:Moto G-code works on every printer listed.`}
-      </p>
+      <p className="slc-note">Printer profiles come from Kiri:Moto. Its G-code starts and ends with each printer's own start and end G-code.</p>
     </div>
   );
 }

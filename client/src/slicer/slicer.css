@@ -39,20 +39,6 @@
 }
 .slc-btn.primary { border: 0; background: var(--cyan); color: #04111c; font-weight: 600; }
 .slc-btn:disabled { opacity: 0.45; cursor: default; }
-.slc-split { position: relative; display: inline-flex; }
-.slc-split .slc-btn.primary:first-child { border-radius: 8px 0 0 8px; }
-.slc-split .caret { border-radius: 0 8px 8px 0; padding: 0 8px; border-left: 1px solid rgba(4, 17, 28, 0.35); }
-.slc-menu {
-  position: absolute; right: 0; top: calc(100% + 6px); z-index: 20; width: 300px; padding: 6px;
-  border: 1px solid var(--line-strong); border-radius: 10px; background: var(--bg-1); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
-}
-.slc-menu button {
-  display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; padding: 9px 10px;
-  border: 0; border-radius: 7px; background: none; text-align: left; cursor: pointer;
-}
-.slc-menu button:hover:not(:disabled) { background: rgba(62, 224, 255, 0.1); }
-.slc-menu button:disabled { opacity: 0.55; cursor: default; }
-.slc-menu small { color: var(--muted); font-size: 12px; }
 
 /* layout */
 .slc-main { flex: 1; min-height: 0; display: grid; grid-template-columns: 300px minmax(0, 1fr); }

@@ -1,6 +1,5 @@
 // Printers, materials and the print settings the slicer screen exposes, and how those
-// settings map onto Kiri:Moto's process options. Orca's mapping lives on the server
-// (server/orca.ts), which validates what it receives on its own.
+// settings map onto Kiri:Moto's process options.
 import kiriDevices from "./kiri-devices.json";
 
 export type PrinterId = keyof typeof kiriDevices.devices;

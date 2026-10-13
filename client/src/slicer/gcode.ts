@@ -1,4 +1,4 @@
-// Reads G-code from either slicer into layers of typed extrusion segments for the
+// Reads G-code into layers of typed extrusion segments for the
 // preview, plus time and filament totals per feature for the legend.
 //
 // Feature comments differ by slicer:

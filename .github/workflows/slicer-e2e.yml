@@ -1,8 +1,8 @@
 name: Slicer e2e
 
 # Builds the client and drives the Produce stage slicer in headless Chromium:
-# a real Kiri:Moto slice in the browser, the preview, and the Orca export path
-# against a stubbed server route. See scripts/slicer-e2e.mjs.
+# a real Kiri:Moto slice in the browser, the preview, and the G-code download.
+# See scripts/slicer-e2e.mjs.
 on:
   pull_request:
     paths:

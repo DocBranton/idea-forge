@@ -1,5 +1,5 @@
 // Binary STL from the CAD workspace's tessellated meshes, in millimetres.
-// Both slicers take STL: Kiri:Moto in the browser, Orca on the server.
+// Kiri:Moto takes STL.
 import type { MeshData, ModelData } from "../cad/engine/types";
 
 export interface MeshBounds {
