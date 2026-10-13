@@ -10,6 +10,9 @@ import { extname, join, normalize } from "node:path";
 import { chromium } from "playwright";
 
 const root = process.argv[2] ?? process.cwd();
+// Optional: a folder to save screenshots of each step into.
+const shots = process.argv[3];
+const shot = async (name) => shots && (await page.screenshot({ path: `${shots}/${name}.png` }));
 const dist = join(root, "client/dist");
 const fixture = await readFile(join(root, "client/src/slicer/fixtures/kiri-cube.gcode"), "utf8");
 const TYPES = { ".js": "text/javascript", ".css": "text/css", ".wasm": "application/wasm", ".html": "text/html", ".json": "application/json", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg" };
@@ -70,12 +73,16 @@ try {
   await page.locator(".slc").waitFor({ timeout: 60_000 });
   await page.locator(".slc-canvas canvas").waitFor({ timeout: 30_000 });
   note("Produce opened", await page.locator(".slc-side").innerText());
+  await page.waitForTimeout(500);
+  await shot("1-prepare");
 
   await page.getByRole("button", { name: "Slice plate" }).click();
   await page.locator(".slc-state", { hasText: "Sliced with Kiri:Moto" }).waitFor({ timeout: 240_000 });
   const legend = await page.locator(".slc-legend").innerText();
   const summary = await page.locator(".slc-sum").innerText();
   note("Kiri slice in the app", `${summary} || legend: ${legend}`);
+  await page.waitForTimeout(500);
+  await shot("2-preview");
   const layers = Number((/Layers\s+(\d+)/.exec(summary) ?? [])[1]);
   if (!(layers > 50)) await fail("Too few layers", summary);
   if (!/Walls|Outer wall/.test(legend) || !/Sparse infill/.test(legend)) await fail("Legend is missing features", legend);
@@ -85,8 +92,12 @@ try {
   await slider.fill("10");
   const tag = await page.locator(".slc-tag.on").innerText();
   if (!tag.startsWith("11")) await fail("Layer slider did not move", tag);
+  await page.waitForTimeout(300);
+  await shot("3-layer-11");
   // Hide a feature from the legend.
   await page.locator(".slc-legend input[type=checkbox]").first().uncheck();
+  await page.waitForTimeout(300);
+  await shot("4-walls-hidden");
 
   // Download the Kiri G-code.
   const dl = page.waitForEvent("download", { timeout: 15_000 });
@@ -106,6 +117,7 @@ try {
   // Printers tab lists Orca for the profiled printer only.
   await page.getByRole("button", { name: "Printers" }).click();
   note("Printers tab", await page.locator(".slc-printers").innerText());
+  await shot("5-printers");
 } catch (e) {
   await fail("Slicer e2e failed", e.message);
 }

@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: slicer-e2e-${{ github.ref }}
@@ -39,4 +39,14 @@ jobs:
       - name: Slice in the Produce stage
         run: |
           cp scripts/slicer-e2e.mjs "$RUNNER_TEMP/pw/"
-          node "$RUNNER_TEMP/pw/slicer-e2e.mjs" "$GITHUB_WORKSPACE"
+          mkdir -p "$RUNNER_TEMP/shots"
+          node "$RUNNER_TEMP/pw/slicer-e2e.mjs" "$GITHUB_WORKSPACE" "$RUNNER_TEMP/shots"
+      # TEMPORARY: screenshots for review, pushed to a scratch branch. Remove before merge.
+      - name: Publish screenshots
+        if: always()
+        run: |
+          cd "$RUNNER_TEMP/shots" && ls *.png >/dev/null 2>&1 || exit 0
+          git init -q && git checkout -q -b shots
+          git config user.name "github-actions[bot]" && git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add *.png && git commit -q -m "slicer e2e screenshots ${{ github.run_id }}"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" "shots:ci-screens/slicer-e2e"
