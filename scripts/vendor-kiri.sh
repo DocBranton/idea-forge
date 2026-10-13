@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Builds Kiri:Moto's slicing engine from source at the commit pinned in scripts/kiri.lock
-# and copies the browser bundle into client/public/vendor/kiri. Kiri fetches its geometry
-# wasm from the absolute path /wasm/, so that file is also copied to client/public/wasm.
+# and copies the browser bundle into client/public/vendor/kiri. Kiri also fetches wasm from
+# /wasm/ (absolute, or relative to a page at the site root), so the wasm files are copied
+# to client/public/wasm as well.
 #
 # Run by .github/workflows/vendor-kiri.yml. Needs Node 22 and network access to GitHub
 # and the npm registry.
@@ -30,7 +31,7 @@ cp src/pack/kiri-eng.js "$OUT/lib/kiri/run/engine.js"
 cp src/pack/kiri-work.js "$OUT/lib/kiri/run/worker.js"
 cp src/pack/kiri-pool.js "$OUT/lib/kiri/run/minion.js"
 cp -L src/wasm/*.wasm "$OUT/lib/kiri/wasm/"
-cp -L src/wasm/kiri-geo.wasm src/wasm/kiri-sla.wasm "$ROOT/client/public/wasm/"
+cp -L src/wasm/*.wasm "$ROOT/client/public/wasm/"
 cp license.md "$OUT/license.kiri-moto.txt"
 echo "$SHA" > "$OUT/VERSION"
 

@@ -38,7 +38,7 @@ const server = createServer(async (req, res) => {
     return res.writeHead(200, { "Content-Type": TYPES[extname(file)] ?? "application/octet-stream" }).end(body);
   } catch {
     if (extname(path)) {
-      console.log(`404 ${path}`);
+      console.log(`::warning title=404::${path}`);
       return res.writeHead(404).end();
     }
     file = join(dist, "index.html");
@@ -81,7 +81,7 @@ try {
   if (!/Walls|Outer wall/.test(legend) || !/Sparse infill/.test(legend)) await fail("Legend is missing features", legend);
 
   // Scrub the layer slider down and check the readout follows.
-  const slider = page.getByLabel("Top layer");
+  const slider = page.getByLabel("Top layer", { exact: true });
   await slider.fill("10");
   const tag = await page.locator(".slc-tag.on").innerText();
   if (!tag.startsWith("11")) await fail("Layer slider did not move", tag);

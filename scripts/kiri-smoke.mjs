@@ -57,7 +57,7 @@ const server = createServer(async (req, res) => {
     const body = await readFile(file);
     res.writeHead(200, { "Content-Type": TYPES[extname(file)] ?? "application/octet-stream" }).end(body);
   } catch {
-    console.log(`404 ${path}`);
+    console.log(`::warning title=404::${path}`);
     res.writeHead(404).end();
   }
 });
