@@ -314,7 +314,7 @@ export default function SlicerWorkspace({ onPing }: SlicerWorkspaceProps) {
           ) : sliced ? (
             <>
               <span className={`slc-dot ${stale ? "stale" : "ok"}`} />
-              {stale ? "Settings changed · slice again" : "Sliced"}
+              {stale ? "Settings changed · slice again" : "Sliced with Kiri:Moto"}
             </>
           ) : (
             "Not sliced yet"
