@@ -1,0 +1,302 @@
+# Idea Forge — GitLab CI/CD for an IL5 Databricks deployment.
+#
+# Every stage writes its evidence to reports/. The evidence job hashes it, maps
+# each file to NIST SP 800-53 controls, and copies it to write-once storage.
+# Setup, variables and the control map: docs/07-gitlab-il5-pipeline.md.
+#
+# Images are variables so they can point at Iron Bank or an internal mirror. Pin
+# each by digest once mirrored; IL5 runners should not pull from public registries.
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "web"
+
+stages: [verify, sbom, scan, dast, sign, gate, deploy, evidence]
+
+variables:
+  NODE_IMAGE: node:22-bookworm-slim
+  POSTGRES_IMAGE: postgres:16
+  SYFT_IMAGE: anchore/syft:debug
+  GITLEAKS_IMAGE: zricethezav/gitleaks:v8.18.4
+  SEMGREP_IMAGE: semgrep/semgrep:latest
+  ZAP_IMAGE: ghcr.io/zaproxy/zaproxy:stable
+  TOOLBOX_IMAGE: $CI_REGISTRY_IMAGE/deploy-toolbox:1   # built from ci/deploy-toolbox.Dockerfile
+  # Merge requests and main block on critical and high; schedules report only.
+  GATE_FAIL_ON: high
+  APP_NAME: idea-forge
+  APP_SOURCE_PATH: /Workspace/Shared/idea-forge
+  npm_config_cache: $CI_PROJECT_DIR/.npm
+
+default:
+  interruptible: true
+
+.node:
+  image: $NODE_IMAGE
+  cache:
+    key: { files: [package-lock.json] }
+    paths: [.npm/]
+  before_script:
+    - mkdir -p reports
+    - npm ci --no-audit --no-fund
+
+.databricks-oidc:
+  # Short-lived GitLab OIDC token exchanged for a Databricks token (workload identity
+  # federation). No stored Databricks secret. DATABRICKS_HOST and DATABRICKS_CLIENT_ID
+  # are environment-scoped CI/CD variables, one service principal per environment.
+  image: $TOOLBOX_IMAGE
+  id_tokens:
+    DATABRICKS_OIDC_TOKEN:
+      aud: $DATABRICKS_ACCOUNT_ID
+  variables:
+    DATABRICKS_AUTH_TYPE: env-oidc
+
+# ---------------------------------------------------------------- verify
+# SA-11 developer testing, CM-2 baseline build.
+verify:
+  extends: .node
+  stage: verify
+  services:
+    - name: $POSTGRES_IMAGE
+      alias: postgres
+  variables:
+    POSTGRES_PASSWORD: postgres
+    CAD_TEST_DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
+    CI: "true"
+  script:
+    - npm run typecheck
+    - npm run build
+    - set -o pipefail; npm run test:cad 2>&1 | tee reports/test-cad.log
+    - set -o pipefail; npm run test:server 2>&1 | tee reports/test-server.log
+  artifacts:
+    when: always
+    paths: [reports/]
+
+# ---------------------------------------------------------------- sbom
+# CM-8 component inventory, SR-4 provenance of components.
+sbom:
+  stage: sbom
+  image:
+    name: $SYFT_IMAGE
+    entrypoint: [""]
+  needs: []
+  script:
+    - mkdir -p reports
+    - /syft dir:. -o cyclonedx-json=reports/sbom.cdx.json
+  artifacts:
+    paths: [reports/sbom.cdx.json]
+
+# ---------------------------------------------------------------- scan
+# RA-5 vulnerability scanning, SA-11(1) static analysis, SI-2 flaw remediation input.
+sast:
+  stage: scan
+  image: $SEMGREP_IMAGE
+  needs: []
+  variables:
+    # Point at vendored rules (ci/semgrep/) on an air-gapped runner.
+    SEMGREP_RULES: p/typescript p/nodejsscan p/react p/secrets
+  script:
+    - mkdir -p reports
+    - semgrep scan $(printf -- '--config %s ' $SEMGREP_RULES) --metrics=off --json --output reports/semgrep.json --exclude client/public/vendor .
+  artifacts:
+    when: always
+    paths: [reports/semgrep.json]
+
+secrets:
+  stage: scan
+  image:
+    name: $GITLEAKS_IMAGE
+    entrypoint: [""]
+  needs: []
+  script:
+    - mkdir -p reports
+    - gitleaks detect --source . --no-git --redact --report-format json --report-path reports/gitleaks.json --exit-code 0
+  artifacts:
+    when: always
+    paths: [reports/gitleaks.json]
+
+dependencies:
+  extends: .node
+  stage: scan
+  needs: []
+  before_script: [mkdir -p reports]
+  script:
+    # npm audit exits non-zero when it finds anything; the gate decides what blocks.
+    - npm audit --package-lock-only --json > reports/npm-audit.json || true
+  artifacts:
+    when: always
+    paths: [reports/npm-audit.json]
+
+# ---------------------------------------------------------------- dast
+# SA-11(8) dynamic analysis, RA-5. The app runs in this job; ZAP runs as a service and
+# reaches it as "build" on the per-job network. MRs get spider + passive scan; the
+# nightly schedule adds an active scan.
+dast:
+  extends: .node
+  stage: dast
+  needs: [verify]
+  services:
+    - name: $POSTGRES_IMAGE
+      alias: postgres
+    - name: $ZAP_IMAGE
+      alias: zap
+      command: ["zap.sh", "-daemon", "-host", "0.0.0.0", "-port", "8090",
+                "-config", "api.disablekey=true",
+                "-config", "api.addrs.addr.name=.*", "-config", "api.addrs.addr.regex=true"]
+  variables:
+    FF_NETWORK_PER_BUILD: "true"
+    POSTGRES_PASSWORD: postgres
+    ZAP: http://zap:8090
+    TARGET: http://build:8000
+    DATABRICKS_APP_PORT: "8000"
+    ACTIVE_SCAN: "false"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      variables: { ACTIVE_SCAN: "true" }
+    - when: on_success
+  script:
+    - apt-get update -qq && apt-get install -y -qq curl jq >/dev/null
+    - npm run build
+    - (npm run start > reports/dast-app.log 2>&1 &)
+    - for i in $(seq 1 60); do curl -fs "http://localhost:8000/" >/dev/null && break; sleep 2; done
+    - curl -fs "http://localhost:8000/" >/dev/null || { cat reports/dast-app.log; exit 1; }
+    - for i in $(seq 1 60); do curl -fs "$ZAP/JSON/core/view/version/" >/dev/null && break; sleep 2; done
+    - curl -fs "$ZAP/JSON/core/action/accessUrl/?url=$TARGET/" >/dev/null
+    - for u in / /api/me /api/cad/status; do curl -fs "$ZAP/JSON/core/action/accessUrl/?url=$TARGET$u" >/dev/null || true; done
+    - SID=$(curl -fs "$ZAP/JSON/spider/action/scan/?url=$TARGET/&recurse=true" | jq -r .scan)
+    - until [ "$(curl -fs "$ZAP/JSON/spider/view/status/?scanId=$SID" | jq -r .status)" = "100" ]; do sleep 3; done
+    - until [ "$(curl -fs "$ZAP/JSON/pscan/view/recordsToScan/" | jq -r .recordsToScan)" = "0" ]; do sleep 2; done
+    - |
+      if [ "$ACTIVE_SCAN" = "true" ]; then
+        AID=$(curl -fs "$ZAP/JSON/ascan/action/scan/?url=$TARGET/&recurse=true" | jq -r .scan)
+        until [ "$(curl -fs "$ZAP/JSON/ascan/view/status/?scanId=$AID" | jq -r .status)" = "100" ]; do sleep 10; done
+      fi
+    - curl -fs "$ZAP/OTHER/core/other/jsonreport/" -o reports/zap.json
+    - curl -fs "$ZAP/OTHER/core/other/htmlreport/" -o reports/zap.html
+  artifacts:
+    when: always
+    paths: [reports/zap.json, reports/zap.html, reports/dast-app.log]
+
+# ---------------------------------------------------------------- sign
+# SI-7 software integrity, SR-4 provenance. Signs the exact source that deploy uploads.
+sign:
+  stage: sign
+  image: $TOOLBOX_IMAGE
+  needs: [verify, sbom]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE != "schedule"
+  script:
+    - mkdir -p release reports
+    - git archive --format=tar.gz --prefix=idea-forge/ -o release/idea-forge-$CI_COMMIT_SHA.tar.gz $CI_COMMIT_SHA
+    - node ci/provenance.mjs release/idea-forge-$CI_COMMIT_SHA.tar.gz > release/provenance.json
+    # Key-based signing: Sigstore's public transparency log is not reachable from IL5.
+    - cosign sign-blob --yes --key env://COSIGN_PRIVATE_KEY --tlog-upload=false --output-signature release/idea-forge-$CI_COMMIT_SHA.tar.gz.sig release/idea-forge-$CI_COMMIT_SHA.tar.gz
+    - cosign sign-blob --yes --key env://COSIGN_PRIVATE_KEY --tlog-upload=false --output-signature release/provenance.json.sig release/provenance.json
+    - cp release/provenance.json release/*.sig reports/
+  artifacts:
+    paths: [release/, reports/provenance.json, reports/*.sig]
+
+# ---------------------------------------------------------------- gate
+# CM-4 impact analysis, CA-5 POA&M, CA-7 continuous monitoring.
+security-gate:
+  image: $NODE_IMAGE
+  stage: gate
+  needs:
+    - { job: sbom }
+    - { job: sast }
+    - { job: secrets }
+    - { job: dependencies }
+    - { job: dast }
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      variables: { GATE_FAIL_ON: none }
+    - when: on_success
+  script:
+    - node ci/security-gate.mjs --reports reports --acceptances security/risk-acceptances.json --fail-on "$GATE_FAIL_ON"
+  artifacts:
+    when: always
+    paths: [reports/gate-decision.json, reports/poam-candidates.json]
+
+# ---------------------------------------------------------------- deploy
+# CM-3 change control, AC-6 least privilege (one service principal per environment),
+# IA-5 no long-lived credentials. Protected environments hold the approvals.
+.deploy:
+  extends: .databricks-oidc
+  stage: deploy
+  needs: [sign, security-gate]
+  interruptible: false
+  script:
+    - cosign verify-blob --key ci/cosign.pub --insecure-ignore-tlog=true --signature release/idea-forge-$CI_COMMIT_SHA.tar.gz.sig release/idea-forge-$CI_COMMIT_SHA.tar.gz
+    - mkdir -p stage reports && tar -xzf release/idea-forge-$CI_COMMIT_SHA.tar.gz -C stage
+    - databricks current-user me --output json | jq '{userName, id}' > reports/deploy-$CI_ENVIRONMENT_NAME-identity.json
+    - databricks workspace import-dir stage/idea-forge "$APP_SOURCE_PATH" --overwrite
+    - databricks apps get "$APP_NAME" --output json >/dev/null 2>&1 || databricks apps create --json "{\"name\":\"$APP_NAME\",\"description\":\"Idea Forge\"}"
+    - databricks apps deploy "$APP_NAME" --source-code-path "$APP_SOURCE_PATH"
+    - |
+      for i in $(seq 1 40); do
+        state=$(databricks apps get "$APP_NAME" --output json | jq -r '.app_status.state // empty')
+        echo "Attempt $i/40: ${state:-unknown}"; [ "$state" = RUNNING ] && break; sleep 15
+      done
+      [ "$state" = RUNNING ] || { databricks apps get "$APP_NAME" --output json; exit 1; }
+    - |
+      databricks apps get "$APP_NAME" --output json | jq --arg sha "$CI_COMMIT_SHA" --arg by "$GITLAB_USER_LOGIN" \
+        --arg pipeline "$CI_PIPELINE_URL" --arg digest "$(sha256sum release/idea-forge-$CI_COMMIT_SHA.tar.gz | cut -d' ' -f1)" \
+        '{environment: env.CI_ENVIRONMENT_NAME, app: .name, url, state: .app_status.state, commit: $sha, artifact_sha256: $digest, triggered_by: $by, pipeline: $pipeline, at: (now | todate)}' \
+        > reports/deploy-$CI_ENVIRONMENT_NAME.json
+    - cat reports/deploy-$CI_ENVIRONMENT_NAME.json
+    - '[ -z "$EVIDENCE_BUCKET" ] || aws s3 cp reports/ "s3://$EVIDENCE_BUCKET/idea-forge/$CI_COMMIT_SHA/$CI_PIPELINE_ID/" --recursive --exclude "*" --include "deploy-*"'
+  artifacts:
+    paths: [reports/deploy-*.json]
+
+deploy-dev:
+  extends: .deploy
+  environment: { name: dev, deployment_tier: development }
+  resource_group: databricks-dev
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE != "schedule"
+
+deploy-test:
+  extends: .deploy
+  needs: [sign, security-gate, deploy-dev]
+  environment: { name: test, deployment_tier: testing }
+  resource_group: databricks-test
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE != "schedule"
+      when: manual
+
+deploy-prod:
+  extends: .deploy
+  needs: [sign, security-gate, deploy-test]
+  environment: { name: production, deployment_tier: production }
+  resource_group: databricks-prod
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE != "schedule"
+      when: manual
+
+# ---------------------------------------------------------------- evidence
+# AU-9 protection of audit information, AU-11 retention, CA-7. Hashes every report,
+# tags it with controls, and copies it to a bucket with S3 Object Lock (compliance mode).
+evidence:
+  image: $TOOLBOX_IMAGE
+  stage: evidence
+  needs:
+    - { job: verify, artifacts: true }
+    - { job: sbom, artifacts: true }
+    - { job: sast, artifacts: true }
+    - { job: secrets, artifacts: true }
+    - { job: dependencies, artifacts: true }
+    - { job: dast, artifacts: true }
+    - { job: security-gate, artifacts: true }
+    - { job: sign, artifacts: true, optional: true }
+  when: always
+  interruptible: false
+  script:
+    - node ci/evidence-manifest.mjs reports > reports/evidence-manifest.json
+    - cat reports/evidence-manifest.json | head -c 2000
+    - '[ -z "$EVIDENCE_BUCKET" ] && echo "EVIDENCE_BUCKET not set: evidence kept as job artifacts only." || aws s3 cp reports/ "s3://$EVIDENCE_BUCKET/idea-forge/$CI_COMMIT_SHA/$CI_PIPELINE_ID/" --recursive'
+  artifacts:
+    when: always
+    paths: [reports/]
+    expire_in: 3 years
