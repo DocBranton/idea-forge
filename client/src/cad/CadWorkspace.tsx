@@ -24,6 +24,7 @@ import { Units, type DisplayUnit } from "./engine/units";
 import type { ModelData } from "./engine/types";
 import { CadTree } from "./CadTree";
 import { CadDetails } from "./CadDetails";
+import { publishModel } from "./handoff";
 import { MATERIALS } from "./labels";
 import { applyAction, emptySession, featureKey, geometryHash, modelKey, type CadAction, type CadSession, type FeatureKey } from "./links";
 import "./cad.css";
@@ -168,6 +169,7 @@ export default function CadWorkspace({
       setDisplayUnit(unit);
       v.setModel(m);
       setModel(m);
+      publishModel(m);
       setSelection(null);
       setLocalSession(emptySession());
       setError(null);

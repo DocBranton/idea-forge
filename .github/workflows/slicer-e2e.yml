@@ -1,0 +1,42 @@
+name: Slicer e2e
+
+# Builds the client and drives the Produce stage slicer in headless Chromium:
+# a real Kiri:Moto slice in the browser, the preview, and the G-code download.
+# See scripts/slicer-e2e.mjs.
+on:
+  pull_request:
+    paths:
+      - client/**
+      - scripts/slicer-e2e.mjs
+      - .github/workflows/slicer-e2e.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: slicer-e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build:client
+      - name: Install headless Chromium
+        run: |
+          mkdir -p "$RUNNER_TEMP/pw" && cd "$RUNNER_TEMP/pw"
+          npm init -y >/dev/null
+          npm install --no-audit --no-fund --loglevel=error playwright@1.49.1
+          npx playwright install --with-deps chromium
+      - name: Slice in the Produce stage
+        run: |
+          cp scripts/slicer-e2e.mjs "$RUNNER_TEMP/pw/"
+          node "$RUNNER_TEMP/pw/slicer-e2e.mjs" "$GITHUB_WORKSPACE"

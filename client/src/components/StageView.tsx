@@ -5,6 +5,8 @@ import { STAGES, type Project, type StageId } from "@/lib/data";
 // The CAD engine is UMW's, unchanged. three.js and the OpenCascade worker load only
 // when a Design or Validate stage opens.
 const CadWorkspace = lazy(() => import("@/cad/CadWorkspace"));
+// The slicer for Produce: Kiri:Moto, in the browser.
+const SlicerWorkspace = lazy(() => import("@/slicer/SlicerWorkspace"));
 
 interface StageViewProps {
   stage: StageId;
@@ -21,6 +23,7 @@ export function StageView({ stage, projects, onStage, onHome, onPing }: StageVie
   const next = STAGES[index + 1];
   const here = projects.filter((p) => p.stage === stage);
   const cad = stage === "design" || stage === "validate";
+  const produce = stage === "produce";
 
   return (
     <div className="stage-view">
@@ -57,6 +60,18 @@ export function StageView({ stage, projects, onStage, onHome, onPing }: StageVie
           <div className="cad-host">
             <Suspense fallback={<p className="empty">Loading the CAD workspace…</p>}>
               <CadWorkspace onPing={onPing} partNumber="IF-0001" rev="A" storageNote="Saved in this browser only" />
+            </Suspense>
+          </div>
+        </section>
+      ) : produce ? (
+        <section className="panel cad-panel">
+          <header>
+            <h3>Print prep</h3>
+            <span>Slice the part from Design or Validate for a 3D printer. Slicing runs in your browser.</span>
+          </header>
+          <div className="slc-host">
+            <Suspense fallback={<p className="empty">Loading the slicer…</p>}>
+              <SlicerWorkspace onPing={onPing} />
             </Suspense>
           </div>
         </section>

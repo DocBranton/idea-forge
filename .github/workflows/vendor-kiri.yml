@@ -1,0 +1,54 @@
+name: Vendor Kiri:Moto engine
+
+# Builds the Kiri:Moto slicing engine from the commit pinned in scripts/kiri.lock,
+# slices a test cube with it in headless Chromium, and commits the bundle to the branch.
+# Runs when the pin or this tooling changes, on any branch but main.
+on:
+  push:
+    branches-ignore: [main]
+    paths:
+      - scripts/kiri.lock
+      - scripts/vendor-kiri.sh
+      - scripts/kiri-smoke.mjs
+      - .github/workflows/vendor-kiri.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: vendor-kiri-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  vendor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build Kiri engine from pinned source
+        run: bash scripts/vendor-kiri.sh
+      - name: Install headless Chromium
+        run: |
+          mkdir -p "$RUNNER_TEMP/pw" && cd "$RUNNER_TEMP/pw"
+          npm init -y >/dev/null
+          npm install --no-audit --no-fund --loglevel=error playwright@1.49.1
+          npx playwright install --with-deps chromium
+      - name: Slice a test cube in the browser
+        run: |
+          cp scripts/kiri-smoke.mjs "$RUNNER_TEMP/pw/"
+          node "$RUNNER_TEMP/pw/kiri-smoke.mjs" "$GITHUB_WORKSPACE"
+      - name: Commit vendored engine
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add client/public/vendor/kiri client/public/wasm client/src/slicer/fixtures
+          if git diff --cached --quiet; then
+            echo "Vendored engine is already up to date."
+            exit 0
+          fi
+          git commit -m "Vendor Kiri:Moto engine $(cut -c1-7 client/public/vendor/kiri/VERSION)"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
