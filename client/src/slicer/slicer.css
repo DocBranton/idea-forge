@@ -122,7 +122,8 @@
 .slc-printers tr.on td { background: rgba(62, 224, 255, 0.08); }
 
 @media (max-width: 900px) {
-  .slc-host { height: auto; min-height: 0; }
+  /* Reserve the stacked sidebar + view height so the page doesn't jump (or cut a scroll short) while the slicer loads. */
+  .slc-host { height: auto; min-height: 940px; }
   .slc-main { grid-template-columns: 1fr; }
   .slc-side { border-right: 0; border-bottom: 1px solid var(--line); max-height: 360px; }
   .slc-view { height: 560px; }
