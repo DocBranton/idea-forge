@@ -56,6 +56,17 @@ const fail = async (title, msg) => {
 };
 
 try {
+  // Phone width: the page starts at the top bar, with the sidebar off-screen as a drawer.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("http://localhost:4319/");
+  await page.locator(".topbar").waitFor({ timeout: 30_000 });
+  const top = (await page.locator(".topbar").boundingBox())?.y ?? -1;
+  const side = await page.locator(".sidebar").boundingBox();
+  note("Phone layout", `top bar at y=${top}; sidebar at x=${side?.x}, width ${side?.width}`);
+  if (top < 0 || top > 4) await fail("Gap above the page on phones", `top bar starts at y=${top}`);
+  if (side && side.x + side.width > 1) await fail("Sidebar visible on phones", JSON.stringify(side));
+  await page.setViewportSize({ width: 1600, height: 1000 });
+
   await page.goto("http://localhost:4319/");
   await page.locator("ol.pipeline button", { hasText: "Produce" }).first().click();
   await page.locator(".slc").waitFor({ timeout: 60_000 });
