@@ -75,6 +75,7 @@ try {
       const out = [];
       for (const el of document.querySelectorAll(".main *")) {
         const r = el.getBoundingClientRect();
+        if (el.closest(".drawer")) continue; // the closed Wingman drawer is fixed off-screen on purpose
         if (r.width && r.right > edge + 1) {
           const id = el.tagName.toLowerCase() + (el.className && typeof el.className === "string" ? "." + el.className.trim().split(/\s+/).join(".") : "");
           out.push(`${id} right=${Math.round(r.right)} w=${Math.round(r.width)}`);
