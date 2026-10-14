@@ -1,4 +1,5 @@
-import { ArrowRight, Eye, Heart, MessageCircle } from "lucide-react";
+import * as React from "react";
+import { ArrowRight, Eye, Layers3 } from "lucide-react";
 
 export interface GalleryItem {
   id: string;
@@ -13,22 +14,18 @@ export interface GalleryItem {
 }
 
 export const GALLERY: GalleryItem[] = [
-  { id: "g1", category: "Training", tone: "training", title: "Medic Training Aid", summary: "Realistic IV arm for field training", likes: "1.2K", comments: 48, views: 12, image: "/gallery/training.svg" },
-  { id: "g2", category: "EOD", tone: "eod", title: "Explosive Ordnance Tool", summary: "Modular disposal tool set", likes: "980", comments: 32, views: 8, image: "/gallery/eod.svg" },
-  { id: "g3", category: "Electronics", tone: "electronics", title: "Radio Belt Clip", summary: "Low-profile, high-strength clip", likes: "860", comments: 21, views: 6, image: "/gallery/electronics.svg" },
-  { id: "g4", category: "Range Safety", tone: "safety", title: "Gun Barrel Safety Block", summary: "Bright, durable chamber block", likes: "1.4K", comments: 21, views: 9, image: "/gallery/safety.svg" },
-  { id: "g5", category: "Maintenance", tone: "maintenance", title: "Maintenance Aid Fixture", summary: "Engine access alignment tool", likes: "920", comments: 28, views: 10, image: "/gallery/maintenance.svg" },
-  { id: "g6", category: "Storage", tone: "storage", title: "Tool Organizer", summary: "Modular socket and tool rack", likes: "1.1K", comments: 26, views: 4, image: "/gallery/storage.svg" },
-  { id: "g7", category: "Test & Measurement", tone: "test", title: "Test Fixture", summary: "Electronics test jig", likes: "780", comments: 19, views: 7, image: "/gallery/test.svg" },
-  { id: "g8", category: "Field Support", tone: "field", title: "Cable Management", summary: "Rugged cable clip set", likes: "1.3K", comments: 31, views: 5, image: "/gallery/field.svg" },
-  { id: "g9", category: "Protective", tone: "protective", title: "Connector Cap Set", summary: "Environmental protection", likes: "640", comments: 18, views: 3, image: "/gallery/protective.svg" },
-  { id: "g10", category: "Maintenance", tone: "maintenance", title: "Panel Removal Tool", summary: "Non-marring composite tool", likes: "970", comments: 24, views: 4, image: "/gallery/maintenance.svg" },
-  { id: "g11", category: "Electronics", tone: "electronics", title: "Rugged Electronics Housing", summary: "Field-ready enclosure", likes: "1.1K", comments: 29, views: 6, image: "/gallery/electronics.svg" },
-  { id: "g12", category: "Training", tone: "training", title: "Tactical Skills Trainer", summary: "Modular training device", likes: "820", comments: 27, views: 5, image: "/gallery/training.svg" },
-  { id: "g13", category: "Inspection", tone: "inspection", title: "Visual Inspection Aid", summary: "Alignment and inspection tool", likes: "690", comments: 20, views: 3, image: "/gallery/inspection.svg" },
-  { id: "g14", category: "Manufacturing", tone: "manufacturing", title: "Assembly Jig", summary: "Repeatable build fixture", likes: "1.0K", comments: 25, views: 4, image: "/gallery/manufacturing.svg" },
-  { id: "g15", category: "Field Support", tone: "field", title: "Storage Case Insert", summary: "Custom foam organization", likes: "860", comments: 23, views: 5, image: "/gallery/field.svg" },
-  { id: "g16", category: "Maintenance", tone: "maintenance", title: "Fluid Handling Tool", summary: "Safe fluid transfer adapter", likes: "780", comments: 17, views: 4, image: "/gallery/maintenance.svg" },
+  { id: "g1", category: "Training", tone: "training", title: "Medic Training Aid", summary: "Reusable IV practice trainer with replaceable soft-tissue insert", likes: "DEMO", comments: 0, views: 0, image: "/gallery/training.svg" },
+  { id: "g2", category: "EOD", tone: "eod", title: "Inert EOD Recognition Kit", summary: "Color-coded nonfunctional classroom identification models", likes: "DEMO", comments: 0, views: 0, image: "/gallery/eod.svg" },
+  { id: "g3", category: "Electronics", tone: "electronics", title: "Tactical Radio Retention Clip", summary: "Replaceable low-profile clip for training radio harnesses", likes: "DEMO", comments: 0, views: 0, image: "/gallery/electronics.svg" },
+  { id: "g4", category: "Range Safety", tone: "safety", title: "Training Safety Marker", summary: "High-visibility status indicator for inert training fixtures", likes: "DEMO", comments: 0, views: 0, image: "/gallery/safety.svg" },
+  { id: "g5", category: "Maintenance", tone: "maintenance", title: "Bench Alignment Fixture", summary: "Repeatable setup jig for non-airworthy shop assemblies", likes: "DEMO", comments: 0, views: 0, image: "/gallery/maintenance.svg" },
+  { id: "g6", category: "Tool Control", tone: "storage", title: "Modular Tool Control Tray", summary: "Labeled socket organizer with missing-tool visibility", likes: "DEMO", comments: 0, views: 0, image: "/gallery/storage.svg" },
+  { id: "g7", category: "Test & Measurement", tone: "test", title: "Electronics Bench Test Jig", summary: "Stable positioning fixture for classroom test boards", likes: "DEMO", comments: 0, views: 0, image: "/gallery/test.svg" },
+  { id: "g8", category: "Field Support", tone: "field", title: "Expeditionary Cable Clip Set", summary: "Reusable cable routing for temporary field setups", likes: "DEMO", comments: 0, views: 0, image: "/gallery/field.svg" },
+  { id: "g9", category: "Protective", tone: "protective", title: "Connector Dust Cap Kit", summary: "Tethered protective caps for stored training equipment", likes: "DEMO", comments: 0, views: 0, image: "/gallery/protective.svg" },
+  { id: "g10", category: "Maintenance", tone: "maintenance", title: "Non-Marring Panel Tool", summary: "Polymer separation aid for approved shop enclosures", likes: "DEMO", comments: 0, views: 0, image: "/gallery/maintenance.svg" },
+  { id: "g11", category: "Electronics", tone: "electronics", title: "Sensor Demo Enclosure", summary: "Serviceable protective housing for classroom electronics", likes: "DEMO", comments: 0, views: 0, image: "/gallery/electronics.svg" },
+  { id: "g12", category: "Training", tone: "training", title: "Modular Skills Practice Station", summary: "Interchangeable training modules for technical instruction", likes: "DEMO", comments: 0, views: 0, image: "/gallery/training.svg" },
 ];
 
 export function Gallery({
@@ -42,13 +39,14 @@ export function Gallery({
   onExpand: () => void;
   onOpen: (item: GalleryItem) => void;
 }) {
+  const [selected, setSelected] = React.useState<GalleryItem | null>(null);
   const q = query.trim().toLowerCase();
   const items = GALLERY.filter((item) => !q || `${item.title} ${item.category} ${item.summary}`.toLowerCase().includes(q));
   const shown = expanded || q ? items : items.slice(0, 8);
   return (
     <section className="gallery" aria-label="Gallery of projects">
       <header>
-        <h3>Featured projects</h3>
+        <div><h3>Project Gallery</h3><small>Illustrative engineering demonstration projects</small></div>
         <button type="button" className="gallery-all" onClick={onExpand}>
           View all projects <ArrowRight size={14} />
         </button>
@@ -59,21 +57,20 @@ export function Gallery({
         <ul>
           {shown.map((item) => (
             <li key={item.id}>
-              <button type="button" className="g-card" onClick={() => onOpen(item)}>
+              <button type="button" className="g-card" onClick={() => { setSelected(item); onOpen(item); }}>
                 <img src={item.image} alt="" />
                 <span className={`g-cat tone-${item.tone}`}>{item.category}</span>
                 <b>{item.title}</b>
                 <small>{item.summary}</small>
                 <span className="g-stats">
-                  <Heart size={12} /> {item.likes}
-                  <MessageCircle size={12} /> {item.comments}
-                  <Eye size={12} /> {item.views}
+                  <Layers3 size={12} /> Demo project <Eye size={12} /> View details
                 </span>
               </button>
             </li>
           ))}
         </ul>
       )}
+      {selected && <div role="presentation" onClick={() => setSelected(null)} style={{position:"fixed",inset:0,zIndex:1000,background:"rgba(7,24,46,.7)",display:"grid",placeItems:"center",padding:16}}><article role="dialog" aria-modal="true" aria-label={selected.title} onClick={e=>e.stopPropagation()} style={{background:"white",color:"#20364d",borderRadius:16,padding:28,maxWidth:700,width:"100%",maxHeight:"90vh",overflow:"auto",boxShadow:"0 20px 60px #0005"}}><button type="button" onClick={()=>setSelected(null)} style={{border:0,background:"#e7f1fa",padding:10,borderRadius:8,cursor:"pointer"}}>← Back to gallery</button><img src={selected.image} alt={selected.title+" concept illustration"} style={{width:"100%",maxHeight:270,objectFit:"cover",borderRadius:12,marginTop:16}}/><p style={{color:"#1972b4",fontWeight:700,fontSize:12,textTransform:"uppercase"}}>{selected.category} · Illustrative case</p><h2>{selected.title}</h2><p>{selected.summary}</p><h3>Mission need</h3><p>Provide a practical, repeatable solution for {selected.category.toLowerCase()} activities while reducing setup effort and improving consistency.</p><h3>Engineering concept</h3><p>Develop a configurable 3D-printed prototype, review material and fit requirements, and capture technician feedback before approving a production approach.</p><h3>Proposed project artifacts</h3><p>Requirements baseline · CAD model · Material selection · Prototype build record · Verification plan · User evaluation</p><p style={{fontSize:12,color:"#64748b"}}>Demonstration content only. No actual fielding, qualification, or approvals are implied.</p></article></div>}
     </section>
   );
 }
