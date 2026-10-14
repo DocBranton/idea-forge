@@ -66,6 +66,8 @@ type View = { kind: "home" } | { kind: "community" } | { kind: "work" } | { kind
 
 export function App() {
   const [view, setView] = useState<View>({ kind: "home" });
+  // A stage panel to scroll to once the stage is on screen (e.g. Print Prep from the menu).
+  const [focusPanel, setFocusPanel] = useState<string | null>(null);
   const [history, setHistory] = useState<View[]>([]);
   const [collapsed, setCollapsed] = useState(() => readFlag(HERO_KEY));
   const [projects, setProjects] = useState<Project[]>(PROJECTS);
@@ -148,9 +150,7 @@ export function App() {
   /** Open a stage and scroll to one of its panels (the stage header pushes it below the fold on phones). */
   function goToPanel(target: StageId, id: string) {
     navigate({ kind: "stage", stage: target });
-    window.requestAnimationFrame(() =>
-      window.requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" })),
-    );
+    setFocusPanel(id);
   }
 
   function goHomeSection(id: string) {
@@ -285,6 +285,8 @@ export function App() {
               onStage={(id) => navigate({ kind: "stage", stage: id })}
               onHome={() => navigate({ kind: "home" })}
               onPing={ping}
+              focusPanel={focusPanel}
+              onFocused={() => setFocusPanel(null)}
             />
           ) : view.kind === "community" ? (
             <CommunityProjects query={query} signedInName={me.name} onStage={(id) => navigate({ kind: "stage", stage: id })} />
