@@ -39,7 +39,7 @@ const server = createServer(async (req, res) => {
 await new Promise((r) => server.listen(4319, r));
 
 const browser = await chromium.launch({ args: ["--use-gl=swiftshader", "--enable-unsafe-swiftshader"] });
-const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
+const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
 const problems = [];
 page.on("pageerror", (e) => problems.push(`pageerror: ${e.message}`));
 page.on("console", (m) => m.type() === "error" && problems.push(`console: ${m.text()}`));
@@ -56,24 +56,31 @@ const fail = async (title, msg) => {
 };
 
 try {
-  // Phone width: the page starts at the top bar, with the sidebar off-screen as a drawer.
-  await page.setViewportSize({ width: 390, height: 844 });
+  // Smallest supported screen: a 1366×768 laptop. Nothing scrolls sideways, the sidebar
+  // shows, and Print Prep brings the slicer up with its controls on screen.
+  await page.setViewportSize({ width: 1366, height: 768 });
   await page.goto("http://localhost:4319/");
   await page.locator(".topbar").waitFor({ timeout: 30_000 });
-  const top = (await page.locator(".topbar").boundingBox())?.y ?? -1;
+  const overflow = await page.evaluate(() => {
+    const m = document.querySelector(".main");
+    return { page: document.documentElement.scrollWidth - innerWidth, main: m ? m.scrollWidth - m.clientWidth : 0 };
+  });
   const side = await page.locator(".sidebar").boundingBox();
-  note("Phone layout", `top bar at y=${top}; sidebar at x=${side?.x}, width ${side?.width}`);
-  if (top < 0 || top > 4) await fail("Gap above the page on phones", `top bar starts at y=${top}`);
-  if (side && side.x + side.width > 1) await fail("Sidebar visible on phones", JSON.stringify(side));
-  // The menu's Print Prep link opens Produce with the slicer scrolled into view.
-  await page.getByRole("button", { name: "Open menu" }).click();
+  note("Laptop layout", `sideways overflow page=${overflow.page}px main=${overflow.main}px; sidebar at x=${side?.x}, width ${side?.width}`);
+  if (overflow.page > 0 || overflow.main > 0) await fail("Page scrolls sideways on a 1366px laptop", JSON.stringify(overflow));
+  if (!side || side.x < 0) await fail("Sidebar hidden on a laptop", JSON.stringify(side));
   await page.getByRole("button", { name: "Print Prep" }).click();
   await page.locator("#print-prep").waitFor({ timeout: 30_000 });
-  await page.waitForTimeout(1200);
+  await page.locator(".slc").waitFor({ timeout: 60_000 });
+  await page.waitForTimeout(800);
   const panel = await page.locator("#print-prep").boundingBox();
-  note("Print Prep link", `panel top at y=${Math.round(panel?.y ?? -1)} of 844`);
+  const slice = await page.getByRole("button", { name: "Slice plate" }).boundingBox();
+  note("Print Prep on a laptop", `panel top y=${Math.round(panel?.y ?? -1)}; Slice plate bottom y=${Math.round((slice?.y ?? 0) + (slice?.height ?? 0))} of 768`);
   if (!panel || panel.y < -4 || panel.y > 200) await fail("Print Prep link did not scroll to the slicer", JSON.stringify(panel));
-  await page.setViewportSize({ width: 1600, height: 1000 });
+  if (!slice || slice.y < 0 || slice.y + slice.height > 768) await fail("Slice plate is off screen on a laptop", JSON.stringify(slice));
+
+  // Primary target: a wide-screen monitor.
+  await page.setViewportSize({ width: 1920, height: 1080 });
 
   await page.goto("http://localhost:4319/");
   await page.locator("ol.pipeline button", { hasText: "Produce" }).first().click();
