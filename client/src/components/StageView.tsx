@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { STAGES, type Project, type StageId } from "@/lib/data";
 
@@ -14,9 +14,18 @@ interface StageViewProps {
   onStage: (id: StageId) => void;
   onHome: () => void;
   onPing: (msg: string) => void;
+  /** Id of a panel on this stage to scroll to after it renders. */
+  focusPanel?: string | null;
+  onFocused?: () => void;
 }
 
-export function StageView({ stage, projects, onStage, onHome, onPing }: StageViewProps) {
+export function StageView({ stage, projects, onStage, onHome, onPing, focusPanel, onFocused }: StageViewProps) {
+  useEffect(() => {
+    if (!focusPanel) return;
+    document.getElementById(focusPanel)?.scrollIntoView({ block: "start" });
+    onFocused?.();
+  }, [focusPanel, onFocused]);
+
   const index = STAGES.findIndex((s) => s.id === stage);
   const s = STAGES[index];
   const prev = STAGES[index - 1];
@@ -64,7 +73,7 @@ export function StageView({ stage, projects, onStage, onHome, onPing }: StageVie
           </div>
         </section>
       ) : produce ? (
-        <section className="panel cad-panel">
+        <section className="panel cad-panel" id="print-prep">
           <header>
             <h3>Print prep</h3>
             <span>Slice the part from Design or Validate for a 3D printer. Slicing runs in your browser.</span>

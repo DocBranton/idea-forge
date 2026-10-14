@@ -65,6 +65,14 @@ try {
   note("Phone layout", `top bar at y=${top}; sidebar at x=${side?.x}, width ${side?.width}`);
   if (top < 0 || top > 4) await fail("Gap above the page on phones", `top bar starts at y=${top}`);
   if (side && side.x + side.width > 1) await fail("Sidebar visible on phones", JSON.stringify(side));
+  // The menu's Print Prep link opens Produce with the slicer scrolled into view.
+  await page.getByRole("button", { name: "Open menu" }).click();
+  await page.getByRole("button", { name: "Print Prep" }).click();
+  await page.locator("#print-prep").waitFor({ timeout: 30_000 });
+  await page.waitForTimeout(1200);
+  const panel = await page.locator("#print-prep").boundingBox();
+  note("Print Prep link", `panel top at y=${Math.round(panel?.y ?? -1)} of 844`);
+  if (!panel || panel.y < -4 || panel.y > 200) await fail("Print Prep link did not scroll to the slicer", JSON.stringify(panel));
   await page.setViewportSize({ width: 1600, height: 1000 });
 
   await page.goto("http://localhost:4319/");

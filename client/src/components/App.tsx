@@ -8,6 +8,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   PenTool,
+  Printer,
   Search,
   ShieldCheck,
   Users,
@@ -65,6 +66,8 @@ type View = { kind: "home" } | { kind: "community" } | { kind: "work" } | { kind
 
 export function App() {
   const [view, setView] = useState<View>({ kind: "home" });
+  // A stage panel to scroll to once the stage is on screen (e.g. Print Prep from the menu).
+  const [focusPanel, setFocusPanel] = useState<string | null>(null);
   const [history, setHistory] = useState<View[]>([]);
   const [collapsed, setCollapsed] = useState(() => readFlag(HERO_KEY));
   const [projects, setProjects] = useState<Project[]>(PROJECTS);
@@ -144,6 +147,12 @@ export function App() {
     setHistory(history.slice(0, -1));
   }
 
+  /** Open a stage and scroll to one of its panels (the stage header pushes it below the fold on phones). */
+  function goToPanel(target: StageId, id: string) {
+    navigate({ kind: "stage", stage: target });
+    setFocusPanel(id);
+  }
+
   function goHomeSection(id: string) {
     navigate({ kind: "home" });
     window.requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" }));
@@ -176,6 +185,7 @@ export function App() {
   const toolItems = [
     { id: "design", label: "Design Studio", Icon: PenTool, on: stage === "design", go: () => navigate({ kind: "stage", stage: "design" }) },
     { id: "validate", label: "Feature Validation", Icon: ShieldCheck, on: stage === "validate", go: () => navigate({ kind: "stage", stage: "validate" }) },
+    { id: "print", label: "Print Prep", Icon: Printer, on: stage === "produce", go: () => goToPanel("produce", "print-prep") },
   ];
 
   return (
@@ -275,6 +285,8 @@ export function App() {
               onStage={(id) => navigate({ kind: "stage", stage: id })}
               onHome={() => navigate({ kind: "home" })}
               onPing={ping}
+              focusPanel={focusPanel}
+              onFocused={() => setFocusPanel(null)}
             />
           ) : view.kind === "community" ? (
             <CommunityProjects query={query} signedInName={me.name} onStage={(id) => navigate({ kind: "stage", stage: id })} />
