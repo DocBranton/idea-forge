@@ -67,7 +67,23 @@ try {
   });
   const side = await page.locator(".sidebar").boundingBox();
   note("Laptop layout", `sideways overflow page=${overflow.page}px main=${overflow.main}px; sidebar at x=${side?.x}, width ${side?.width}`);
-  if (overflow.page > 0 || overflow.main > 0) await fail("Page scrolls sideways on a 1366px laptop", JSON.stringify(overflow));
+  if (overflow.page > 0 || overflow.main > 0) {
+    // Name the widest offenders so the failure says what to fix.
+    const culprits = await page.evaluate(() => {
+      const m = document.querySelector(".main");
+      const edge = m ? m.getBoundingClientRect().right : innerWidth;
+      const out = [];
+      for (const el of document.querySelectorAll(".main *")) {
+        const r = el.getBoundingClientRect();
+        if (r.width && r.right > edge + 1) {
+          const id = el.tagName.toLowerCase() + (el.className && typeof el.className === "string" ? "." + el.className.trim().split(/\s+/).join(".") : "");
+          out.push(`${id} right=${Math.round(r.right)} w=${Math.round(r.width)}`);
+        }
+      }
+      return out.slice(0, 12);
+    });
+    await fail("Content cut off on a 1366px laptop", `${JSON.stringify(overflow)} :: ${culprits.join(" ; ")}`);
+  }
   if (!side || side.x < 0) await fail("Sidebar hidden on a laptop", JSON.stringify(side));
   await page.getByRole("button", { name: "Print Prep" }).click();
   await page.locator("#print-prep").waitFor({ timeout: 30_000 });
