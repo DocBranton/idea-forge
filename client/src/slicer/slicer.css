@@ -1,5 +1,4 @@
 /* Produce stage slicer. Uses the Idea Forge tokens from foundry.css. */
-.slc-host { height: min(780px, calc(100vh - 220px)); min-height: 580px; position: relative; }
 .slc {
   display: flex; flex-direction: column; height: 100%;
   border: 1px solid var(--line); border-radius: 12px; overflow: hidden;
@@ -122,8 +121,6 @@
 .slc-printers tr.on td { background: rgba(62, 224, 255, 0.08); }
 
 @media (max-width: 900px) {
-  /* Reserve the stacked sidebar + view height so the page doesn't jump (or cut a scroll short) while the slicer loads. */
-  .slc-host { height: auto; min-height: 940px; }
   .slc-main { grid-template-columns: 1fr; }
   .slc-side { border-right: 0; border-bottom: 1px solid var(--line); max-height: 360px; }
   .slc-view { height: 560px; }

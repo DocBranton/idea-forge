@@ -67,24 +67,11 @@ try {
   if (side && side.x + side.width > 1) await fail("Sidebar visible on phones", JSON.stringify(side));
   // The menu's Print Prep link opens Produce with the slicer scrolled into view.
   await page.getByRole("button", { name: "Open menu" }).click();
-  await page.evaluate(() => {
-    window.__trace = [];
-    const t0 = performance.now();
-    const tick = () => {
-      const m = document.querySelector(".main");
-      const p = document.getElementById("print-prep");
-      window.__trace.push([Math.round(performance.now() - t0), m?.scrollTop, m?.scrollHeight, p ? Math.round(p.getBoundingClientRect().top) : null]);
-      if (performance.now() - t0 < 1500) requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-  });
   await page.getByRole("button", { name: "Print Prep" }).click();
   await page.locator("#print-prep").waitFor({ timeout: 30_000 });
   await page.waitForTimeout(1200);
   const panel = await page.locator("#print-prep").boundingBox();
   note("Print Prep link", `panel top at y=${Math.round(panel?.y ?? -1)} of 844`);
-  const trace = await page.evaluate(() => window.__trace.filter((r, i, a) => i === 0 || r.slice(1).join() !== a[i - 1].slice(1).join()));
-  note("Scroll trace [ms, scrollTop, scrollHeight, panelTop]", JSON.stringify(trace).slice(0, 2500));
   if (!panel || panel.y < -4 || panel.y > 200) await fail("Print Prep link did not scroll to the slicer", JSON.stringify(panel));
   await page.setViewportSize({ width: 1600, height: 1000 });
 

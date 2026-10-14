@@ -587,6 +587,13 @@ button.row:hover { color: var(--cyan); }
 .stage-step button:hover { background: rgba(62, 224, 255, 0.1); }
 .cad-panel { padding-bottom: 18px; }
 .cad-host { height: min(720px, calc(100vh - 260px)); min-height: 480px; position: relative; }
+/* Produce's slicer panel. Sized here, not in slicer.css, because slicer.css arrives with the
+   lazily loaded slicer: the panel must have its height before then, or the page jumps and a
+   scroll to it (Print Prep in the menu) stops short. */
+.slc-host { height: min(780px, calc(100vh - 220px)); min-height: 580px; position: relative; }
+@media (max-width: 900px) {
+  .slc-host { height: auto; min-height: 940px; }
+}
 
 /* ---------- modal & toast ---------- */
 .modal-scrim {
