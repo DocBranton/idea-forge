@@ -14,18 +14,18 @@ export interface GalleryItem {
 }
 
 export const GALLERY: GalleryItem[] = [
-  { id: "g1", category: "Training", tone: "training", title: "Medic Training Aid", summary: "Reusable IV practice trainer with replaceable soft-tissue insert", likes: "DEMO", comments: 0, views: 0, image: "/gallery/training.svg" },
-  { id: "g2", category: "EOD", tone: "eod", title: "Inert EOD Recognition Kit", summary: "Color-coded nonfunctional classroom identification models", likes: "DEMO", comments: 0, views: 0, image: "/gallery/eod.svg" },
-  { id: "g3", category: "Electronics", tone: "electronics", title: "Tactical Radio Retention Clip", summary: "Replaceable low-profile clip for training radio harnesses", likes: "DEMO", comments: 0, views: 0, image: "/gallery/electronics.svg" },
-  { id: "g4", category: "Range Safety", tone: "safety", title: "Training Safety Marker", summary: "High-visibility status indicator for inert training fixtures", likes: "DEMO", comments: 0, views: 0, image: "/gallery/safety.svg" },
-  { id: "g5", category: "Maintenance", tone: "maintenance", title: "Bench Alignment Fixture", summary: "Repeatable setup jig for non-airworthy shop assemblies", likes: "DEMO", comments: 0, views: 0, image: "/gallery/maintenance.svg" },
-  { id: "g6", category: "Tool Control", tone: "storage", title: "Modular Tool Control Tray", summary: "Labeled socket organizer with missing-tool visibility", likes: "DEMO", comments: 0, views: 0, image: "/gallery/storage.svg" },
-  { id: "g7", category: "Test & Measurement", tone: "test", title: "Electronics Bench Test Jig", summary: "Stable positioning fixture for classroom test boards", likes: "DEMO", comments: 0, views: 0, image: "/gallery/test.svg" },
-  { id: "g8", category: "Field Support", tone: "field", title: "Expeditionary Cable Clip Set", summary: "Reusable cable routing for temporary field setups", likes: "DEMO", comments: 0, views: 0, image: "/gallery/field.svg" },
-  { id: "g9", category: "Protective", tone: "protective", title: "Connector Dust Cap Kit", summary: "Tethered protective caps for stored training equipment", likes: "DEMO", comments: 0, views: 0, image: "/gallery/protective.svg" },
-  { id: "g10", category: "Maintenance", tone: "maintenance", title: "Non-Marring Panel Tool", summary: "Polymer separation aid for approved shop enclosures", likes: "DEMO", comments: 0, views: 0, image: "/gallery/maintenance.svg" },
-  { id: "g11", category: "Electronics", tone: "electronics", title: "Sensor Demo Enclosure", summary: "Serviceable protective housing for classroom electronics", likes: "DEMO", comments: 0, views: 0, image: "/gallery/electronics.svg" },
-  { id: "g12", category: "Training", tone: "training", title: "Modular Skills Practice Station", summary: "Interchangeable training modules for technical instruction", likes: "DEMO", comments: 0, views: 0, image: "/gallery/training.svg" },
+  { id: "g1", category: "Training", tone: "training", title: "Medic Training Aid", summary: "Reusable IV practice trainer with replaceable soft-tissue insert", likes: "DEMO", comments: 0, views: 0, image: "/gallery/showcase-medic.svg" },
+  { id: "g2", category: "EOD", tone: "eod", title: "Inert EOD Recognition Kit", summary: "Color-coded nonfunctional classroom identification models", likes: "DEMO", comments: 0, views: 0, image: "/gallery/showcase-eod.svg" },
+  { id: "g3", category: "Electronics", tone: "electronics", title: "Tactical Radio Retention Clip", summary: "Replaceable low-profile clip for training radio harnesses", likes: "DEMO", comments: 0, views: 0, image: "/gallery/showcase-radio.svg" },
+  { id: "g4", category: "Range Safety", tone: "safety", title: "Training Safety Marker", summary: "High-visibility status indicator for inert training fixtures", likes: "DEMO", comments: 0, views: 0, image: "/gallery/showcase-fixture.svg" },
+  { id: "g5", category: "Maintenance", tone: "maintenance", title: "Bench Alignment Fixture", summary: "Repeatable setup jig for non-airworthy shop assemblies", likes: "DEMO", comments: 0, views: 0, image: "/gallery/showcase-fixture.svg" },
+  { id: "g6", category: "Tool Control", tone: "storage", title: "Modular Tool Control Tray", summary: "Labeled socket organizer with missing-tool visibility", likes: "DEMO", comments: 0, views: 0, image: "/gallery/showcase-tools.svg" },
+  { id: "g7", category: "Test & Measurement", tone: "test", title: "Electronics Bench Test Jig", summary: "Stable positioning fixture for classroom test boards", likes: "DEMO", comments: 0, views: 0, image: "/gallery/showcase-test.svg" },
+  { id: "g8", category: "Field Support", tone: "field", title: "Expeditionary Cable Clip Set", summary: "Reusable cable routing for temporary field setups", likes: "DEMO", comments: 0, views: 0, image: "/gallery/showcase-field.svg" },
+  { id: "g9", category: "Protective", tone: "protective", title: "Connector Dust Cap Kit", summary: "Tethered protective caps for stored training equipment", likes: "DEMO", comments: 0, views: 0, image: "/gallery/showcase-caps.svg" },
+  { id: "g10", category: "Maintenance", tone: "maintenance", title: "Non-Marring Panel Tool", summary: "Polymer separation aid for approved shop enclosures", likes: "DEMO", comments: 0, views: 0, image: "/gallery/showcase-fixture.svg" },
+  { id: "g11", category: "Electronics", tone: "electronics", title: "Sensor Demo Enclosure", summary: "Serviceable protective housing for classroom electronics", likes: "DEMO", comments: 0, views: 0, image: "/gallery/showcase-test.svg" },
+  { id: "g12", category: "Training", tone: "training", title: "Modular Skills Practice Station", summary: "Interchangeable training modules for technical instruction", likes: "DEMO", comments: 0, views: 0, image: "/gallery/showcase-medic.svg" },
 ];
 
 export function Gallery({
