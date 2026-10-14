@@ -64,7 +64,7 @@ export function StageView({ stage, projects, onStage, onHome, onPing }: StageVie
           </div>
         </section>
       ) : produce ? (
-        <section className="panel cad-panel">
+        <section className="panel cad-panel" id="print-prep">
           <header>
             <h3>Print prep</h3>
             <span>Slice the part from Design or Validate for a 3D printer. Slicing runs in your browser.</span>
