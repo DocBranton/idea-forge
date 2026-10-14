@@ -72,6 +72,11 @@ try {
   await page.waitForTimeout(1200);
   const panel = await page.locator("#print-prep").boundingBox();
   note("Print Prep link", `panel top at y=${Math.round(panel?.y ?? -1)} of 844`);
+  note("Scroll state", JSON.stringify(await page.evaluate(() => {
+    const m = document.querySelector(".main");
+    const cs = m && getComputedStyle(m);
+    return { main: m && { top: m.scrollTop, h: m.clientHeight, sh: m.scrollHeight, overflow: cs.overflowY, height: cs.height }, doc: document.scrollingElement.scrollTop, panel: !!document.getElementById("print-prep") };
+  })));
   if (!panel || panel.y < -4 || panel.y > 200) await fail("Print Prep link did not scroll to the slicer", JSON.stringify(panel));
   await page.setViewportSize({ width: 1600, height: 1000 });
 
