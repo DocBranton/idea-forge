@@ -304,7 +304,7 @@ export function App() {
                 query={query}
                 expanded={galleryOpen}
                 onExpand={() => setGalleryOpen(true)}
-                onOpen={(item) => ping(`${item.title} is in the project gallery.`)}
+                onOpen={() => {}}
               />
               <Challenges
                 query={query}
