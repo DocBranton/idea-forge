@@ -39,6 +39,10 @@ Slicing is done by [Kiri:Moto](https://github.com/GridSpace/grid-apps) (MIT) in 
 
 **Tests.** `npm run test:slicer` covers the G-code reader against the real Kiri fixture, the STL export and the profile mapping. The **Slicer e2e** workflow builds the client and, in headless Chromium, slices the sample part with Kiri, checks the preview, and downloads the G-code.
 
+## Screen sizes
+
+Built for wide-screen monitors. The smallest supported screen is a 1366×768 laptop, which the Slicer e2e checks. Production is never accessed from a phone. See `CLAUDE.md` for the design notes.
+
 ## Run
 
 Requires the Databricks CLI, authenticated to the workspace in `databricks.yml`.

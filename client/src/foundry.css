@@ -811,8 +811,12 @@ button.row:hover { color: var(--cyan); }
 .drawer-input { display: flex; gap: 8px; padding: 12px; border-top: 1px solid rgba(139, 92, 246, 0.28); }
 .drawer-input input { flex: 1; background: rgba(8, 12, 28, 0.8); border: 1px solid rgba(167, 139, 250, 0.28); border-radius: 999px; color: #fff; padding: 10px 14px; outline: none; }
 .drawer-input button { background: linear-gradient(90deg, #7a3cff, #9b5cff); border-radius: 999px; padding: 0 16px; color: #fff; }
-@media (max-width: 1280px) {
+/* Laptops (up to 1440px) drop the last-logon note; otherwise the top bar runs past the
+   screen edge and cuts off the bell. */
+@media (max-width: 1440px) {
   .logon-note { display: none; }
+}
+@media (max-width: 1280px) {
   .btn-ai span { display: none; }
   .btn-ai { width: 40px; padding: 0; justify-content: center; }
 }
